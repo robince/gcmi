@@ -28,6 +28,17 @@ end
 [Ntrlz,Nsgnz,Nvarz] = size(z);
 
 % check here if Nsgnz==Nsgnx
+if Nsgnx==Nsgnz
+  % ok
+elseif Nsgnx==1 && Nsgnz>1
+  x = repmat(x, [1 Nsgnz]);
+  Nsgnx = size(x,2);
+elseif Nsgnz==1 && Nsgnx>1
+  z = repmat(z, [1 Nsgnx]);
+  Nsgnz = size(z,2);
+else
+  error('unsupported dimensionality of input');
+end
 
 if (Ntrlx~=Ntrly) || (Ntrlx~=Ntrlz)
     error('cmi_ggg: number of trials do not match')

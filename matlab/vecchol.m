@@ -8,7 +8,7 @@ c   = zeros(siz);
 
 siz = size(x);
 
-if numel(siz)==2,
+if numel(siz)==2
     if siz(2)==1
         % 1d response
         c = sqrt(x);
