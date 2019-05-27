@@ -71,7 +71,7 @@ idx  = (Nvarx + 1):Nvarxyz;
 Cxyz = zeros(Nsgnx,Nvarxyz,Nvarxyz);
 
 for k = 1:Nsgnx
-  xyz = [reshape(x(:,k,:),[Ntrlx Nvarx]) y reshape(z(:,k,:), [Ntrlz Nvarz])];
+  xyz = [reshape(x(:,k,:),[Ntrlx Nvarx]) reshape(y, [Ntrly Nvary*Nsgny]) reshape(z(:,k,:), [Ntrlz Nvarz])];
   Cxyz(k,:,:) = (xyz'*xyz) / (Ntrlx - 1);
 end
 
