@@ -42,6 +42,7 @@ else
     exwn = exp( x(wneg,:) + bsxfun(@minus,log(-w(wneg)), m) );
     y = m + log(sum(exwp,1) - sum(exwn,1));
 end
+y = reshape(y,[szx(2:end) 1]);
 
 
 
