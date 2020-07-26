@@ -4,7 +4,7 @@ Gaussian copula mutual information estimation
 
 import numpy as np
 import scipy as sp
-import scipy.stats
+import scipy.special
 import warnings
 
 __version__ = '0.3'
@@ -382,7 +382,7 @@ def mi_mixture_gd(x, y, Ym):
 
         # log mixture likelihood for these unscented points
         # sum over classes, axis=0
-        logmixlik = sp.misc.logsumexp(log_lik,axis=0,b=w[:,np.newaxis])
+        logmixlik = sp.special.logsumexp(log_lik,axis=0,b=w[:,np.newaxis])
 
         # add to entropy estimate (sum over unscented points for this class)
         Hmix = Hmix + w[yi]*logmixlik.sum()
