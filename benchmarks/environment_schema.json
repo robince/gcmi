@@ -1,0 +1,76 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "GCMI Benchmark Environment Metadata",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "run_id",
+    "language",
+    "platform",
+    "cpu_model",
+    "physical_cores",
+    "logical_cores"
+  ],
+  "properties": {
+    "run_id": {
+      "type": "string"
+    },
+    "language": {
+      "type": "string",
+      "enum": ["matlab", "python"]
+    },
+    "platform": {
+      "type": "string"
+    },
+    "arch": {
+      "type": ["string", "null"]
+    },
+    "cpu_model": {
+      "type": "string"
+    },
+    "physical_cores": {
+      "type": "integer",
+      "minimum": 1
+    },
+    "logical_cores": {
+      "type": "integer",
+      "minimum": 1
+    },
+    "os_version": {
+      "type": ["string", "null"]
+    },
+    "matlab_release": {
+      "type": ["string", "null"]
+    },
+    "python_version": {
+      "type": ["string", "null"]
+    },
+    "numpy_version": {
+      "type": ["string", "null"]
+    },
+    "numba_version": {
+      "type": ["string", "null"]
+    },
+    "llvmlite_version": {
+      "type": ["string", "null"]
+    },
+    "compiler": {
+      "type": ["string", "null"]
+    },
+    "compiler_version": {
+      "type": ["string", "null"]
+    },
+    "openmp_runtime": {
+      "type": ["string", "null"]
+    },
+    "blas_vendor": {
+      "type": ["string", "null"]
+    },
+    "git_revision": {
+      "type": ["string", "null"]
+    },
+    "notes": {
+      "type": ["string", "null"]
+    }
+  }
+}
