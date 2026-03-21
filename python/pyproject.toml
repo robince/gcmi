@@ -1,0 +1,26 @@
+[build-system]
+requires = []
+build-backend = "build_backend"
+backend-path = ["."]
+
+[project]
+name = "gcmi"
+version = "0.4.0"
+description = "Gaussian-copula mutual information estimators"
+requires-python = ">=3.10"
+dependencies = ["numpy>=1.23"]
+
+[project.optional-dependencies]
+test = ["pytest>=8"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+filterwarnings = [
+  "error::DeprecationWarning",
+  "error::PendingDeprecationWarning",
+]
+
+[dependency-groups]
+dev = [
+    "pytest>=9.0.2",
+]
