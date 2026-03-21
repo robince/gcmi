@@ -226,7 +226,7 @@ def test_gcmi_cc_wraps_copnorm_and_warns_on_repeats() -> None:
 
     repeated = np.array([1.0, 1.0, 1.0, 2.0, 3.0])
     with pytest.warns(UserWarning, match="more than 10% repeated values"):
-        gcmi.gcmi_cc(repeated, np.array([0.0, 1.0, 2.0, 3.0, 4.0]))
+        gcmi.gcmi_cc(repeated, np.array([0.0, 4.0, 1.0, 3.0, 2.0]))
 
 
 def test_mi_model_gd_matches_manual_formula_and_rejects_empty_classes() -> None:
