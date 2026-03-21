@@ -34,6 +34,8 @@ if size(y,1) ~= Ntrl
     error('mi_model_gd: number of trials do not match');
 end
 
+validate_discrete_labels(y, Ym, 'mi_model_gd', 'y');
+
 % default option values
 if nargin<4
     biascorrect = true;
@@ -46,10 +48,9 @@ if ~demeaned
     x = bsxfun(@minus,x,sum(x,1)/Ntrl);
 end
 
-% class-conditional entropies 
+% class-conditional entropies
 Ntrl_y = zeros(1,Ym);
 Hcond = zeros(1,Ym);
-c = 0.5*(log(2*pi)+1);
 for yi=1:Ym
     idx = y==(yi-1);
     xm = x(idx,:);
@@ -89,4 +90,3 @@ end
 I = Hunc - sum(w .* Hcond);
 % convert to bits
 I = I / ln2;
-

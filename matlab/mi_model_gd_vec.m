@@ -20,12 +20,12 @@ if isvector(x)
     x = x(:);
 end
 if ndims(x)>3
-    error('mi_model_gd: input arrays should be 3d')
+    error('mi_model_gd_vec: input arrays should be 3d')
 end
 if isvector(y)
     y = y(:);
 else
-    error('mi_model_gd: only univariate discrete variable supported');
+    error('mi_model_gd_vec: only univariate discrete variable supported');
 end
 
 Ntrl = size(x,1);
@@ -33,8 +33,10 @@ Nvec = size(x,2);
 Xdim = size(x,3);
 
 if size(y,1) ~= Ntrl
-    error('mi_model_gd: number of trials do not match');
+    error('mi_model_gd_vec: number of trials do not match');
 end
+
+validate_discrete_labels(y, Ym, 'mi_model_gd_vec', 'y');
 
 % default option values
 if nargin<4
@@ -60,7 +62,7 @@ I = zeros(Nvec,1);
 % return
 
 % one-hot encoding of Y
-Yhot = indexed2boolean(y);
+Yhot = indexed2boolean(y, Ym, 'mi_model_gd_vec');
 
 % remove class means
 [Xcen class_means] = removeclassmeans(x, Yhot);
@@ -162,10 +164,10 @@ for k = 1:size(design,2)
 end
 Xcen = reshape(Xcen,[Ntrl Nvec Ndim]);
 
-function Y = indexed2boolean(X)
-uX = unique(X);
-Y  = false(numel(X),numel(uX));
-for k = 1:size(Y,2)
-  Y(X==uX(k),k) = true;
+function Y = indexed2boolean(X, Ym, funcname)
+validate_discrete_labels(X, Ym, funcname, 'y');
+X = X(:);
+Y = false(numel(X), Ym);
+for k = 1:Ym
+  Y(X==(k-1),k) = true;
 end
-

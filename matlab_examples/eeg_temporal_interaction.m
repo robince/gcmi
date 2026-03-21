@@ -8,10 +8,8 @@
 % or "Run Section" button from the toolbar 
 % or right click -> Evaluate currect section
 
-% You need the gcmi/matlab directory on your matlab path.
-% If you are running from the gcmi project tree you can add this with the
-% following command:
-% addpath('../matlab')
+% Add the repository root to your MATLAB path and run:
+%   setup_gcmi
 
 % Questions / comments : robince@gmail.com
 

@@ -29,6 +29,8 @@ if size(y,1) ~= Ntrl
     error('mi_mixture_gd: number of trials do not match');
 end
 
+validate_discrete_labels(y, Ym, 'mi_mixture_gd', 'y');
+
 
 Hcond = zeros(1,Ym);
 NtrlY = zeros(1,Ym);

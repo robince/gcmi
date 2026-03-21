@@ -1,18 +1,12 @@
 function y = maxstar(x, w)
-% maxstar   Log of a sum of exponentials.
+% MAXSTAR Stable log-sum-exp helper.
 %   For vectors, maxstar(x) is equivalent to log(sum(exp(x))).
-%   For matrices, maxstar(x) is a row vector and maxstar operates on 
-%   each column of x. For N-D arrays, maxstar(x) operates along the
-%   first non-singleton dimension.
+%   For matrices and N-D arrays, maxstar operates along the first
+%   non-singleton dimension.
 %
 %   maxstar(x,w) is the log of a weighted sum of exponentials,
-%   equivalent to log(sum(w.*exp(x))). Vectors w and x must be
-%   the same length. For matrix x, the weights w can be input as
-%   a matrix the same size as x, or as a vector of the same length 
-%   as columns of x. Weights may be zero or negative, but the result
-%   sum(w.*exp(x)) must be greater than zero. 
-%
-%   Acts on first dimensions
+%   equivalent to log(sum(w.*exp(x))). In this codebase w is expected
+%   to be a vector with one weight per row of x.
 
 if nargin<2
     w = [];
@@ -30,7 +24,7 @@ szx = size(x);
 if isempty(w)
     % no weight
     m = max(x);
-    y = m + log(sum(exp(bsxfun(@minux,x,m))));
+    y = m + log(sum(exp(bsxfun(@minus,x,m))));
 else
     % Move the weight into the exponent xw and find
     % m = max(xw) over terms with positive weights
@@ -43,7 +37,6 @@ else
     y = m + log(sum(exwp,1) - sum(exwn,1));
 end
 y = reshape(y,[szx(2:end) 1]);
-
 
 
 
