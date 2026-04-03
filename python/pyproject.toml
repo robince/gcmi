@@ -1,17 +1,22 @@
 [build-system]
-requires = []
-build-backend = "build_backend"
-backend-path = ["."]
+requires = ["hatchling>=1.24"]
+build-backend = "hatchling.build"
 
 [project]
 name = "gcmi"
 version = "0.4.0"
 description = "Gaussian-copula mutual information estimators"
 requires-python = ">=3.10"
-dependencies = ["numpy>=1.23"]
+dependencies = [
+  "numpy>=1.23",
+  "scipy>=1.10",
+]
 
 [project.optional-dependencies]
 test = ["pytest>=8"]
+
+[tool.hatch.build.targets.wheel]
+packages = ["src/gcmi"]
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]

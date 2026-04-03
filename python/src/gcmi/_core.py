@@ -9,9 +9,9 @@ from __future__ import annotations
 import math
 import warnings
 from numbers import Integral
-from statistics import NormalDist
 
 import numpy as np
+from scipy import special as sp_special
 
 __version__ = "0.4.0"
 
@@ -30,10 +30,6 @@ __all__ = [
     "gccmi_ccd",
     "__version__",
 ]
-
-_NORMAL = NormalDist()
-_NORM_PPF = np.vectorize(_NORMAL.inv_cdf, otypes=[float])
-
 
 def _as_continuous_2d(x: np.ndarray | list[float] | tuple[float, ...], name: str) -> np.ndarray:
     arr = np.asarray(x, dtype=float)
@@ -74,53 +70,16 @@ def _logdet_from_cholesky(chol: np.ndarray) -> float:
     return float(np.log(np.diagonal(chol)).sum())
 
 
-def _digamma_scalar(x: float) -> float:
-    if x <= 0.0:
-        if float(x).is_integer():
-            raise ValueError("digamma is undefined at non-positive integers")
-        return _digamma_scalar(1.0 - x) - math.pi / math.tan(math.pi * x)
-
-    result = 0.0
-    while x < 8.0:
-        result -= 1.0 / x
-        x += 1.0
-
-    inv = 1.0 / x
-    inv2 = inv * inv
-    result += math.log(x) - 0.5 * inv - inv2 * (
-        1.0 / 12.0
-        - inv2 * (
-            1.0 / 120.0
-            - inv2 * (
-                1.0 / 252.0
-                - inv2 * (
-                    1.0 / 240.0
-                    - inv2 * (5.0 / 660.0)
-                )
-            )
-        )
-    )
-    return result
-
-
-def _digamma(x: np.ndarray | float) -> np.ndarray | float:
-    arr = np.asarray(x, dtype=float)
-    if arr.ndim == 0:
-        return float(_digamma_scalar(float(arr)))
-    vec = np.vectorize(_digamma_scalar, otypes=[float])
-    return vec(arr)
-
-
 def _bias_correction(n_samples: int, n_vars: int) -> float:
     dims = np.arange(1, n_vars + 1, dtype=float)
-    psi_terms = _digamma((n_samples - dims) / 2.0) / 2.0
+    psi_terms = sp_special.psi((n_samples - dims) / 2.0) / 2.0
     dterm = (math.log(2.0) - math.log(n_samples - 1.0)) / 2.0
     return float(n_vars * dterm + psi_terms.sum())
 
 
 def _bias_sequence(n_samples: int, n_vars: int) -> tuple[float, np.ndarray]:
     dims = np.arange(1, n_vars + 1, dtype=float)
-    psi_terms = _digamma((n_samples - dims) / 2.0) / 2.0
+    psi_terms = sp_special.psi((n_samples - dims) / 2.0) / 2.0
     dterm = (math.log(2.0) - math.log(n_samples - 1.0)) / 2.0
     return float(dterm), np.cumsum(np.asarray(psi_terms, dtype=float))
 
@@ -178,7 +137,7 @@ def ctransform(x: np.ndarray | list[float] | tuple[float, ...]) -> np.ndarray:
 def copnorm(x: np.ndarray | list[float] | tuple[float, ...]) -> np.ndarray:
     """Copula-normalize values along the last axis."""
 
-    return _NORM_PPF(ctransform(x))
+    return sp_special.ndtri(ctransform(x))
 
 
 def ent_g(x: np.ndarray | list[float] | tuple[float, ...], biascorrect: bool = True) -> float:
@@ -304,7 +263,7 @@ def gcmi_model_cd(
     Ym_int = _require_integral(Ym, "Ym")
     if y_arr.size != x_arr.shape[1]:
         raise ValueError("number of trials do not match")
-    if y_arr.min() != 0 or y_arr.max() != Ym_int - 1:
+    if y_arr.min() < 0 or y_arr.max() > Ym_int - 1:
         raise ValueError("values of discrete variable y are out of bounds")
 
     _warn_repeated_values(x_arr, "x")
@@ -406,7 +365,7 @@ def gcmi_mixture_cd(
     Ym_int = _require_integral(Ym, "Ym")
     if y_arr.size != x_arr.shape[1]:
         raise ValueError("number of trials do not match")
-    if y_arr.min() != 0 or y_arr.max() != Ym_int - 1:
+    if y_arr.min() < 0 or y_arr.max() > Ym_int - 1:
         raise ValueError("values of discrete variable y are out of bounds")
 
     _warn_repeated_values(x_arr, "x")
@@ -519,7 +478,7 @@ def gccmi_ccd(
     Zm_int = _require_integral(Zm, "Zm")
     if y_arr.shape[1] != x_arr.shape[1] or z_arr.size != x_arr.shape[1]:
         raise ValueError("number of trials do not match")
-    if z_arr.min() != 0 or z_arr.max() != Zm_int - 1:
+    if z_arr.min() < 0 or z_arr.max() > Zm_int - 1:
         raise ValueError("values of discrete variable z are out of bounds")
 
     _warn_repeated_values(x_arr, "x")

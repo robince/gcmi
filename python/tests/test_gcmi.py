@@ -1,46 +1,16 @@
 from __future__ import annotations
 
 import math
-from statistics import NormalDist
 
 import numpy as np
 import pytest
+from scipy import special as sp_special
 
 import gcmi
 
 
 def digamma_ref(x: np.ndarray | float) -> np.ndarray | float:
-    arr = np.asarray(x, dtype=float)
-
-    def _scalar(v: float) -> float:
-        if v <= 0.0:
-            if float(v).is_integer():
-                raise ValueError("digamma undefined at non-positive integers")
-            return _scalar(1.0 - v) - math.pi / math.tan(math.pi * v)
-        result = 0.0
-        while v < 8.0:
-            result -= 1.0 / v
-            v += 1.0
-        inv = 1.0 / v
-        inv2 = inv * inv
-        result += math.log(v) - 0.5 * inv - inv2 * (
-            1.0 / 12.0
-            - inv2 * (
-                1.0 / 120.0
-                - inv2 * (
-                    1.0 / 252.0
-                    - inv2 * (
-                        1.0 / 240.0
-                        - inv2 * (5.0 / 660.0)
-                    )
-                )
-            )
-        )
-        return result
-
-    if arr.ndim == 0:
-        return float(_scalar(float(arr)))
-    return np.vectorize(_scalar, otypes=[float])(arr)
+    return sp_special.psi(x)
 
 
 def gaussian_bias_correction(n_samples: int, n_vars: int) -> float:
@@ -196,10 +166,9 @@ def test_ctransform_and_copnorm_follow_last_axis_ranks() -> None:
     x = np.array([[3.0, 1.0, 2.0], [4.0, 0.0, 5.0]])
     expected = np.array([[0.75, 0.25, 0.5], [0.5, 0.25, 0.75]])
     np.testing.assert_allclose(gcmi.ctransform(x), expected)
-    nd = NormalDist()
     np.testing.assert_allclose(
         gcmi.copnorm(x),
-        np.vectorize(nd.inv_cdf, otypes=[float])(expected),
+        sp_special.ndtri(expected),
     )
 
 
@@ -265,6 +234,8 @@ def test_gcmi_model_cd_matches_wrapped_model_estimator() -> None:
     y = np.array([0, 0, 0, 1, 1, 1], dtype=np.int64)
     expected = gcmi.mi_model_gd(gcmi.copnorm(x), y, 2, biascorrect=True, demeaned=True)
     assert gcmi.gcmi_model_cd(x, y, 2) == pytest.approx(expected)
+    with pytest.raises(ValueError, match="empty classes"):
+        gcmi.gcmi_model_cd(x, y, 3)
 
 
 def test_mi_mixture_gd_matches_manual_small_case() -> None:
@@ -291,6 +262,8 @@ def test_gcmi_mixture_cd_matches_wrapped_mixture_estimator() -> None:
     pooled_y = np.concatenate(relabeled)
     expected = gcmi.mi_mixture_gd(pooled_x, pooled_y, 2)
     assert gcmi.gcmi_mixture_cd(x, y, 2) == pytest.approx(expected)
+    with pytest.raises(ValueError, match="empty class|empty classes"):
+        gcmi.gcmi_mixture_cd(x, y, 3)
 
 
 def test_cmi_ggg_matches_manual_formula() -> None:
@@ -328,3 +301,5 @@ def test_gccmi_ccc_and_ccd_match_expected_compositions() -> None:
     cmi, pooled = gcmi.gccmi_ccd(x2, y2, z2, 2)
     assert cmi == pytest.approx(np.sum(np.asarray(weights) / float(z2.size) * np.asarray(expected_cmi)))
     assert pooled == pytest.approx(pooled_expected)
+    with pytest.raises(ValueError, match="empty class|empty classes"):
+        gcmi.gccmi_ccd(x2, y2, z2, 3)
