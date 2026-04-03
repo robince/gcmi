@@ -229,3 +229,51 @@ Where `run_id` contains:
 ## Next Step
 
 Implementation work in MATLAB and Python should use this directory as the reporting contract and should not invent separate benchmark schemas.
+
+## MATLAB Runner
+
+The MATLAB side benchmark runner is:
+
+- [`run_matlab_benchmarks.m`](run_matlab_benchmarks.m)
+
+Run it from MATLAB with the repository root as the current directory, or add the `benchmarks/` directory to the path first.
+
+Example using the current Fortran/OpenMP MEX entrypoints:
+
+```matlab
+addpath('benchmarks');
+run_matlab_benchmarks('FixtureIds', {'copnorm_medium_f64', 'cc_small_f64'}, ...
+    'ThreadCounts', [1 2 4 8], ...
+    'Repeat', 10);
+```
+
+This writes:
+
+- `benchmarks/runs/<run_id>/environment.json`
+- `benchmarks/runs/<run_id>/results.jsonl`
+
+The runner automatically adapts the canonical fixture semantics to the current legacy MEX boundary quirks, including:
+
+- converting benchmark-level `0 .. M-1` labels to the current MEX layer's `1 .. M`
+- applying `biasterms_cc` or `biasterms_cd` for `_nobc_` kernels so results stay comparable to the bias-corrected MATLAB reference path
+- permuting arrays into the kernel-specific physical layouts required by the existing MEX functions
+
+To benchmark a future C++ MEX implementation with different entrypoint names, pass a function-name map:
+
+```matlab
+addpath('benchmarks');
+fmap = struct( ...
+    'copnorm_slice', 'copnorm_slice_cpp', ...
+    'info_cc_slice', 'info_cc_slice_cpp', ...
+    'info_cc_multi', 'info_cc_multi_cpp', ...
+    'info_cc_slice_indexed', 'info_cc_slice_indexed_cpp', ...
+    'info_c1d_slice', 'info_c1d_slice_cpp', ...
+    'info_cd_slice', 'info_cd_slice_cpp', ...
+    'info_dc_slice_bc', 'info_dc_slice_bc_cpp');
+run_matlab_benchmarks('OptimizedLabel', 'cpp_mex', ...
+    'OptimizedFunctions', fmap, ...
+    'ThreadCounts', [1 2 4 8], ...
+    'Repeat', 10);
+```
+
+This keeps the fixture set and output schema unchanged, so the current MEX and a replacement C++ MEX can be compared directly.
