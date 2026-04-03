@@ -24,28 +24,28 @@ The current accelerated MATLAB layer in `extern/gcmi_mex` is a narrow batch-kern
 Priority kernels and current sources:
 
 - `copnorm_slice_omp`
-  - [`extern/gcmi_mex/copnorm_slice_omp.F90T`](/Users/robince/code/gcmi/extern/gcmi_mex/copnorm_slice_omp.F90T)
+  - [`extern/gcmi_mex/copnorm_slice_omp.F90T`](extern/gcmi_mex/copnorm_slice_omp.F90T)
   - typed copula-normalization over pages
 - `info_cc_slice_nobc_omp`
-  - [`extern/gcmi_mex/info_cc_slice_nobc_omp.f`](/Users/robince/code/gcmi/extern/gcmi_mex/info_cc_slice_nobc_omp.f)
+  - [`extern/gcmi_mex/info_cc_slice_nobc_omp.f`](extern/gcmi_mex/info_cc_slice_nobc_omp.f)
   - many continuous `X` pages against one shared continuous `Y`
 - `info_cc_multi_nobc_omp`
-  - [`extern/gcmi_mex/info_cc_multi_nobc_omp.f`](/Users/robince/code/gcmi/extern/gcmi_mex/info_cc_multi_nobc_omp.f)
+  - [`extern/gcmi_mex/info_cc_multi_nobc_omp.f`](extern/gcmi_mex/info_cc_multi_nobc_omp.f)
   - many continuous `X` pages against matching continuous `Y` pages
 - `info_cc_slice_indexed_nobc_omp`
-  - [`extern/gcmi_mex/info_cc_slice_indexed_nobc_omp.f`](/Users/robince/code/gcmi/extern/gcmi_mex/info_cc_slice_indexed_nobc_omp.f)
+  - [`extern/gcmi_mex/info_cc_slice_indexed_nobc_omp.f`](extern/gcmi_mex/info_cc_slice_indexed_nobc_omp.f)
   - many continuous `X` pages selected by an index vector against one shared continuous `Y`
 - `info_c1d_slice_nobc_omp`
-  - [`extern/gcmi_mex/info_c1d_slice_nobc_omp.f`](/Users/robince/code/gcmi/extern/gcmi_mex/info_c1d_slice_nobc_omp.f)
+  - [`extern/gcmi_mex/info_c1d_slice_nobc_omp.f`](extern/gcmi_mex/info_c1d_slice_nobc_omp.f)
   - optimized special case for 1D continuous-discrete MI
 - `info_cd_slice_nobc_omp`
-  - [`extern/gcmi_mex/info_cd_slice_nobc_omp.f`](/Users/robince/code/gcmi/extern/gcmi_mex/info_cd_slice_nobc_omp.f)
+  - [`extern/gcmi_mex/info_cd_slice_nobc_omp.f`](extern/gcmi_mex/info_cd_slice_nobc_omp.f)
   - multivariate continuous-discrete MI with one-pass conditional covariance accumulation
 - `info_dc_slice_nobc_omp`
-  - [`extern/gcmi_mex/info_dc_slice_nobc_omp.f`](/Users/robince/code/gcmi/extern/gcmi_mex/info_dc_slice_nobc_omp.f)
+  - [`extern/gcmi_mex/info_dc_slice_nobc_omp.f`](extern/gcmi_mex/info_dc_slice_nobc_omp.f)
   - discrete-continuous MI without analytic bias correction
 - `info_dc_slice_bc_omp`
-  - [`extern/gcmi_mex/info_dc_slice_bc_omp.f`](/Users/robince/code/gcmi/extern/gcmi_mex/info_dc_slice_bc_omp.f)
+  - [`extern/gcmi_mex/info_dc_slice_bc_omp.f`](extern/gcmi_mex/info_dc_slice_bc_omp.f)
   - discrete-continuous MI with analytic bias correction
 
 ### Algorithmic Shape

@@ -249,7 +249,6 @@ def _copnorm_slice_reference(x: np.ndarray) -> np.ndarray:
     for page in range(x.shape[0]):
         order = np.argsort(x[page, :])
         ranks = np.empty(x.shape[1], dtype=np.int64)
-        probs = ranks.astype(float)
         ranks[order] = np.arange(1, x.shape[1] + 1, dtype=np.int64)
         probs = ranks / float(x.shape[1] + 1)
         out[page, :] = np.asarray(sp_special.ndtri(probs), dtype=out.dtype)

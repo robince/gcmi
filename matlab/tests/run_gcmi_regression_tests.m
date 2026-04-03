@@ -61,9 +61,9 @@ assert_close(actual, expected, 1e-12, 'gccmi_ccc wrapper');
 end
 
 function test_gccmi_ccd_wrapper()
-x = [0.5; 1.4; 2.3; 3.2];
-y = [3.1; 2.2; 1.3; 0.4];
-z = [0; 0; 1; 1];
+x = [0.5; 1.4; 2.3; 3.2; 0.8; 1.7; 2.9; 3.6];
+y = [3.1; 2.4; 3.3; 1.2; 1.5; 2.8; 1.9; 3.4];
+z = [0; 0; 0; 0; 1; 1; 1; 1];
 [cmi, jointI] = gccmi_ccd(x, y, z, 2);
 
 Icond = zeros(2,1);

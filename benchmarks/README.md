@@ -109,8 +109,8 @@ Each benchmark run must produce:
 
 The required schemas are:
 
-- [`results_schema.json`](/Users/robince/code/gcmi/benchmarks/results_schema.json)
-- [`environment_schema.json`](/Users/robince/code/gcmi/benchmarks/environment_schema.json)
+- [`results_schema.json`](results_schema.json)
+- [`environment_schema.json`](environment_schema.json)
 
 ## Fixture Policy
 
@@ -125,7 +125,7 @@ Benchmark fixtures are defined by:
 
 The shared fixture manifest lives in:
 
-- [`fixtures_manifest.json`](/Users/robince/code/gcmi/benchmarks/fixtures_manifest.json)
+- [`fixtures_manifest.json`](fixtures_manifest.json)
 
 ## Required Metrics
 
