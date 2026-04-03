@@ -94,12 +94,8 @@ def _package_artifacts(editable: bool) -> list[Artifact]:
             )
         )
     else:
-        artifacts.extend(
-            [
-                Artifact(f"{NAME}/__init__.py", source=PACKAGE / "__init__.py"),
-                Artifact(f"{NAME}/_core.py", source=PACKAGE / "_core.py"),
-            ]
-        )
+        for path in sorted(PACKAGE.rglob("*.py")):
+            artifacts.append(Artifact(f"{NAME}/{path.relative_to(PACKAGE)}", source=path))
     return artifacts
 
 

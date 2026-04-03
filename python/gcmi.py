@@ -2,15 +2,25 @@
 
 from __future__ import annotations
 
+import sys
 from importlib.util import module_from_spec, spec_from_file_location
 from pathlib import Path
 
-_CORE_PATH = Path(__file__).resolve().parent / "src" / "gcmi" / "_core.py"
-_SPEC = spec_from_file_location("_gcmi_core", _CORE_PATH)
+_SRC = Path(__file__).resolve().parent / "src"
+if str(_SRC) not in sys.path:
+    sys.path.insert(0, str(_SRC))
+
+_PKG_PATH = _SRC / "gcmi" / "__init__.py"
+_SPEC = spec_from_file_location(
+    "_gcmi_pkg",
+    _PKG_PATH,
+    submodule_search_locations=[str(_SRC / "gcmi")],
+)
 if _SPEC is None or _SPEC.loader is None:  # pragma: no cover - import-time guard
-    raise ImportError(f"Unable to load gcmi core implementation from {_CORE_PATH}")
+    raise ImportError(f"Unable to load gcmi package implementation from {_PKG_PATH}")
 
 _CORE = module_from_spec(_SPEC)
+sys.modules[_SPEC.name] = _CORE
 _SPEC.loader.exec_module(_CORE)
 
 __all__ = list(getattr(_CORE, "__all__", ()))
@@ -20,4 +30,4 @@ __doc__ = _CORE.__doc__
 for _name in __all__:
     globals()[_name] = getattr(_CORE, _name)
 
-del _name, _CORE, _CORE_PATH, _SPEC, module_from_spec, spec_from_file_location, Path
+del _name, _CORE, _PKG_PATH, _SPEC, _SRC, module_from_spec, spec_from_file_location, Path, sys

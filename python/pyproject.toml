@@ -8,15 +8,12 @@ name = "gcmi"
 version = "0.4.0"
 description = "Gaussian-copula mutual information estimators"
 requires-python = ">=3.10"
-dependencies = [
-    "matplotlib>=3.10.8",
-    "numba>=0.64.0",
-    "numpy>=1.23",
-    "pyperf>=2.10.0",
-    "scipy>=1.15.3",
-]
+dependencies = ["numpy>=1.23"]
 
 [project.optional-dependencies]
+opt = ["numba>=0.64.0"]
+bench = ["matplotlib>=3.10.8", "numba>=0.64.0", "pyperf>=2.10.0"]
+matlab = ["scipy>=1.15.3"]
 test = ["pytest>=8"]
 
 [tool.pytest.ini_options]

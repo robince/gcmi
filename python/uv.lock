@@ -253,16 +253,23 @@ name = "gcmi"
 version = "0.4.0"
 source = { editable = "." }
 dependencies = [
-    { name = "matplotlib" },
-    { name = "numba" },
     { name = "numpy", version = "2.2.6", source = { registry = "https://pypi.org/simple" }, marker = "python_full_version < '3.11'" },
     { name = "numpy", version = "2.4.3", source = { registry = "https://pypi.org/simple" }, marker = "python_full_version >= '3.11'" },
-    { name = "pyperf" },
-    { name = "scipy", version = "1.15.3", source = { registry = "https://pypi.org/simple" }, marker = "python_full_version < '3.11'" },
-    { name = "scipy", version = "1.17.1", source = { registry = "https://pypi.org/simple" }, marker = "python_full_version >= '3.11'" },
 ]
 
 [package.optional-dependencies]
+bench = [
+    { name = "matplotlib" },
+    { name = "numba" },
+    { name = "pyperf" },
+]
+matlab = [
+    { name = "scipy", version = "1.15.3", source = { registry = "https://pypi.org/simple" }, marker = "python_full_version < '3.11'" },
+    { name = "scipy", version = "1.17.1", source = { registry = "https://pypi.org/simple" }, marker = "python_full_version >= '3.11'" },
+]
+opt = [
+    { name = "numba" },
+]
 test = [
     { name = "pytest" },
 ]
@@ -274,14 +281,15 @@ dev = [
 
 [package.metadata]
 requires-dist = [
-    { name = "matplotlib", specifier = ">=3.10.8" },
-    { name = "numba", specifier = ">=0.64.0" },
+    { name = "matplotlib", marker = "extra == 'bench'", specifier = ">=3.10.8" },
+    { name = "numba", marker = "extra == 'bench'", specifier = ">=0.64.0" },
+    { name = "numba", marker = "extra == 'opt'", specifier = ">=0.64.0" },
     { name = "numpy", specifier = ">=1.23" },
-    { name = "pyperf", specifier = ">=2.10.0" },
+    { name = "pyperf", marker = "extra == 'bench'", specifier = ">=2.10.0" },
     { name = "pytest", marker = "extra == 'test'", specifier = ">=8" },
-    { name = "scipy", specifier = ">=1.15.3" },
+    { name = "scipy", marker = "extra == 'matlab'", specifier = ">=1.15.3" },
 ]
-provides-extras = ["test"]
+provides-extras = ["opt", "bench", "matlab", "test"]
 
 [package.metadata.requires-dev]
 dev = [{ name = "pytest", specifier = ">=9.0.2" }]
