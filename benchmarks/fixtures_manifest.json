@@ -1,0 +1,84 @@
+{
+  "version": 1,
+  "canonical_label_encoding": "zero_based",
+  "copnorm_tie_policy": "legacy_speed_ordering",
+  "fixtures": [
+    {
+      "fixture_id": "cc_small_f64",
+      "kernel": "info_cc_slice",
+      "dtype": "float64",
+      "ntrl": 200,
+      "npage": 1000,
+      "xdim": 2,
+      "ydim": 2,
+      "seed": 1001
+    },
+    {
+      "fixture_id": "cc_large_f64",
+      "kernel": "info_cc_slice",
+      "dtype": "float64",
+      "ntrl": 5000,
+      "npage": 10000,
+      "xdim": 4,
+      "ydim": 2,
+      "seed": 1002
+    },
+    {
+      "fixture_id": "cc_multi_medium_f64",
+      "kernel": "info_cc_multi",
+      "dtype": "float64",
+      "ntrl": 1000,
+      "npage": 1000,
+      "xdim": 4,
+      "ydim": 2,
+      "seed": 1003
+    },
+    {
+      "fixture_id": "cc_indexed_medium_f64",
+      "kernel": "info_cc_slice_indexed",
+      "dtype": "float64",
+      "ntrl": 1000,
+      "npage": 1000,
+      "xdim": 4,
+      "ydim": 2,
+      "seed": 1004
+    },
+    {
+      "fixture_id": "c1d_medium_f64",
+      "kernel": "info_c1d_slice",
+      "dtype": "float64",
+      "ntrl": 1000,
+      "npage": 1000,
+      "ym": 4,
+      "seed": 1005
+    },
+    {
+      "fixture_id": "cd_medium_f64",
+      "kernel": "info_cd_slice",
+      "dtype": "float64",
+      "ntrl": 1000,
+      "npage": 1000,
+      "xdim": 4,
+      "ym": 4,
+      "seed": 1006
+    },
+    {
+      "fixture_id": "dc_bc_medium_f64",
+      "kernel": "info_dc_slice_bc",
+      "dtype": "float64",
+      "ntrl": 1000,
+      "npage": 1000,
+      "ydim": 2,
+      "xm": 4,
+      "seed": 1007
+    },
+    {
+      "fixture_id": "copnorm_medium_f64",
+      "kernel": "copnorm_slice",
+      "dtype": "float64",
+      "ntrl": 1000,
+      "npage": 1000,
+      "seed": 1008
+    }
+  ]
+}

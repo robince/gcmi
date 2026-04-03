@@ -13,11 +13,13 @@ dependencies = [
 ]
 
 [project.optional-dependencies]
+opt = ["numba>=0.64.0"]
+bench = ["matplotlib>=3.10.8", "numba>=0.64.0", "pyperf>=2.10.0"]
+matlab = ["scipy>=1.15.3"]
 test = ["pytest>=8"]
 
 [tool.hatch.build.targets.wheel]
 packages = ["src/gcmi"]
-
 [tool.pytest.ini_options]
 testpaths = ["tests"]
 filterwarnings = [

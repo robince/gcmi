@@ -57,6 +57,14 @@ Compatibility shim: [`python/gcmi.py`](python/gcmi.py)
 - Produces Gaussianized marginals while preserving rank order.
 - Used by all copula-based wrappers.
 
+`copnorm_slice(x, backend="auto")`
+
+- Batched copula normalization for page-first Python workloads.
+- Expects one page per first-axis entry and samples on the last axis.
+- Uses the legacy fast tie-ordering convention from the optimized batch path.
+- For non-tied data it matches pagewise scalar `copnorm`.
+- For tied data it may differ slightly from pagewise scalar `copnorm`.
+
 `ent_g(x, biascorrect=True)`
 
 - Returns the analytic entropy of a Gaussian variable in bits.

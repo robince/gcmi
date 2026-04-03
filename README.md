@@ -79,7 +79,7 @@ Please note a crucial difference in the interface between the Python and Matlab 
 
 Discrete inputs are passed as two arguments, the vector of values over samples y, and an integer parameter Ym specifying the size of the discrete space. In Python discrete variables should be stored in an integer data type array; in Matlab a double is used but should contain only integer values. y takes values between `0` and `Ym-1` inclusive. Empty classes are not supported.
 
-Care should be taken with continuous variables that contain many repeated values. The copula transform which depends on a rank ordering will not be well defined in such cases. Possible approaches include repeated calculations while jittering the data with low amplitude noise to avoid the numerically equivalent values, or using binning and discrete methods. 
+Care should be taken with continuous variables that contain many repeated values. The copula transform depends on a rank ordering and is therefore not well defined in such cases. Possible approaches include repeated calculations while jittering the data with low amplitude noise to avoid numerically equivalent values, or using binning and discrete methods. In the Python implementation, the scalar `ctransform` / `copnorm` functions and the batched `copnorm_slice` path use deterministic but not identical tie handling. `copnorm_slice` follows the legacy fast batch-ranking convention used by the benchmark and optimized path, so for tied data it may differ slightly from applying scalar `copnorm` page by page. For non-tied data they are expected to agree.
 
 For functions with a `biascorrect` option, this is an optional true or false switch (default true) which indicates whether analytic bias correction for the entropy of Gaussian variables is applied. The bias correction increases computation time and is not needed when combined with permutation testing.
 
@@ -120,6 +120,10 @@ These functions implement the different steps for the GCMI calculation. They are
 *  `cx = copnorm(x)` 
 
     Perform copula normalisation (equivalent to `norminv(ctransform(x))`). Returns standard normal samples with rank ordering preserved. If x is >2D normalization is performed on each dimension separately.  
+
+*  `cx = copnorm_slice(x)` 
+
+    Python-only batched copula normalization across a page axis, intended for optimized batch workloads. The logical shape is one page per first-axis entry and samples on the last axis. This function uses the legacy fast tie-ordering convention from the optimized batch path; when repeated values are present, results may differ slightly from applying scalar `copnorm` to each page independently.
 
 ##### Information theoretic quantities for Gaussian variables
 

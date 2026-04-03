@@ -1,0 +1,114 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "GCMI Benchmark Result Record",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "kernel",
+    "language",
+    "implementation",
+    "dtype",
+    "thread_count",
+    "ntrl",
+    "steady_state_time_ms",
+    "slices_per_second"
+  ],
+  "properties": {
+    "kernel": {
+      "type": "string",
+      "enum": [
+        "copnorm_slice",
+        "info_cc_slice",
+        "info_cc_multi",
+        "info_cc_slice_indexed",
+        "info_c1d_slice",
+        "info_cd_slice",
+        "info_dc_slice",
+        "info_dc_slice_bc"
+      ]
+    },
+    "language": {
+      "type": "string",
+      "enum": ["matlab", "python"]
+    },
+    "implementation": {
+      "type": "string"
+    },
+    "dtype": {
+      "type": "string",
+      "enum": ["float32", "float64"]
+    },
+    "thread_count": {
+      "type": "integer",
+      "minimum": 1
+    },
+    "ntrl": {
+      "type": "integer",
+      "minimum": 1
+    },
+    "npage": {
+      "type": ["integer", "null"],
+      "minimum": 1
+    },
+    "xdim": {
+      "type": ["integer", "null"],
+      "minimum": 1
+    },
+    "ydim": {
+      "type": ["integer", "null"],
+      "minimum": 1
+    },
+    "ym": {
+      "type": ["integer", "null"],
+      "minimum": 1
+    },
+    "xm": {
+      "type": ["integer", "null"],
+      "minimum": 1
+    },
+    "compile_time_ms": {
+      "type": ["number", "null"],
+      "minimum": 0
+    },
+    "steady_state_time_ms": {
+      "type": "number",
+      "minimum": 0
+    },
+    "p10_time_ms": {
+      "type": ["number", "null"],
+      "minimum": 0
+    },
+    "p90_time_ms": {
+      "type": ["number", "null"],
+      "minimum": 0
+    },
+    "slices_per_second": {
+      "type": "number",
+      "minimum": 0
+    },
+    "speedup_vs_reference": {
+      "type": ["number", "null"],
+      "minimum": 0
+    },
+    "speedup_vs_1thread": {
+      "type": ["number", "null"],
+      "minimum": 0
+    },
+    "scaling_efficiency": {
+      "type": ["number", "null"],
+      "minimum": 0
+    },
+    "fixture_id": {
+      "type": "string"
+    },
+    "run_id": {
+      "type": "string"
+    },
+    "git_revision": {
+      "type": "string"
+    },
+    "notes": {
+      "type": ["string", "null"]
+    }
+  }
+}
