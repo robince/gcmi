@@ -52,9 +52,11 @@ assert_close(actual, expected, 1e-12, 'gcmi_cc wrapper');
 end
 
 function test_gccmi_ccc_wrapper()
+% x, y, z have distinct rank orderings so their post-copnorm covariance
+% matrix is positive definite (not rank-deficient).
 x = [0.2; 1.3; 2.1; 3.7; 4.4];
-y = [-0.7; 0.9; 1.8; 2.6; 3.5];
-z = [1.0; 2.2; 3.3; 4.1; 5.4];
+y = [3.5; 0.9; 1.8; -0.7; 2.6];
+z = [1.0; 4.1; 2.2; 5.4; 3.3];
 expected = cmi_ggg(copnorm(x), copnorm(y), copnorm(z), true, true);
 actual = gccmi_ccc(x, y, z);
 assert_close(actual, expected, 1e-12, 'gccmi_ccc wrapper');
