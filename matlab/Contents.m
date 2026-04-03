@@ -1,7 +1,7 @@
 % GCMI Gaussian-copula mutual information estimators.
 %
 % Core helpers:
-%   setup_gcmi                 Add the repository root to the MATLAB path.
+%   setup_gcmi                 Add matlab/ (and optionally matlab_examples/) to the MATLAB path.
 %   gcmi_version               Print the package version.
 %
 % Continuous estimators:

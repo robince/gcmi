@@ -10,16 +10,15 @@ import math
 import os
 import warnings
 from numbers import Integral
-from statistics import NormalDist
 
 import numpy as np
+from scipy import special as sp_special
 
 from ._dispatch import get_backend as _get_backend
 from ._dispatch import get_backend_info as _get_backend_info
 from ._dispatch import resolve_backend as _resolve_backend
 from ._dispatch import set_backend as _set_backend
-
-__version__ = "0.4.0"
+from ._version import __version__
 
 __all__ = [
     "ctransform",
@@ -46,11 +45,6 @@ __all__ = [
     "get_backend_info",
     "__version__",
 ]
-
-_NORMAL = NormalDist()
-_NORM_PPF = np.vectorize(_NORMAL.inv_cdf, otypes=[float])
-
-
 def _as_continuous_2d(x: np.ndarray | list[float] | tuple[float, ...], name: str) -> np.ndarray:
     arr = np.asarray(x, dtype=float)
     if arr.ndim == 0:
@@ -102,8 +96,6 @@ def _as_batch_continuous_2d(x: object, name: str) -> np.ndarray:
     elif arr.ndim > 2:
         raise ValueError(f"{name} must be at most 2d")
     return np.ascontiguousarray(np.atleast_2d(arr))
-
-
 def _as_discrete_1d(x: np.ndarray | list[int] | tuple[int, ...], name: str) -> np.ndarray:
     arr = np.squeeze(np.asarray(x))
     if arr.ndim > 1:
@@ -133,8 +125,6 @@ def _as_index_1d(x: object, name: str) -> np.ndarray:
     if not np.issubdtype(arr.dtype, np.integer):
         raise ValueError(f"{name} must be an integer array")
     return np.atleast_1d(arr.astype(np.int64, copy=False))
-
-
 def _require_integral(value: Integral, name: str) -> int:
     if not isinstance(value, Integral):
         raise ValueError(f"{name} should be an integer")
@@ -154,47 +144,19 @@ def _require_sample_capacity(n_samples: int, n_vars: int, context: str) -> None:
 
 def _shared_float_dtype(*arrays: np.ndarray) -> np.dtype[np.float64] | np.dtype[np.float32]:
     return np.dtype(np.float32) if all(arr.dtype == np.float32 for arr in arrays) else np.dtype(np.float64)
-
-
 def _logdet_from_cholesky(chol: np.ndarray) -> float:
     return float(np.log(np.diagonal(chol)).sum())
 
 
 def _digamma_scalar(x: float) -> float:
-    if x <= 0.0:
-        if float(x).is_integer():
-            raise ValueError("digamma is undefined at non-positive integers")
-        return _digamma_scalar(1.0 - x) - math.pi / math.tan(math.pi * x)
-
-    result = 0.0
-    while x < 8.0:
-        result -= 1.0 / x
-        x += 1.0
-
-    inv = 1.0 / x
-    inv2 = inv * inv
-    result += math.log(x) - 0.5 * inv - inv2 * (
-        1.0 / 12.0
-        - inv2 * (
-            1.0 / 120.0
-            - inv2 * (
-                1.0 / 252.0
-                - inv2 * (
-                    1.0 / 240.0
-                    - inv2 * (5.0 / 660.0)
-                )
-            )
-        )
-    )
-    return result
+    return float(sp_special.psi(x))
 
 
 def _digamma(x: np.ndarray | float) -> np.ndarray | float:
     arr = np.asarray(x, dtype=float)
     if arr.ndim == 0:
         return float(_digamma_scalar(float(arr)))
-    vec = np.vectorize(_digamma_scalar, otypes=[float])
-    return vec(arr)
+    return np.asarray(sp_special.psi(arr), dtype=float)
 
 
 def _bias_correction(n_samples: int, n_vars: int) -> float:
@@ -240,8 +202,6 @@ def _validate_discrete_pages(
                 f"each class in {name}[{page}] needs more than {min_count} samples; "
                 f"problem classes: {bad.tolist()}"
             )
-
-
 def _warn_repeated_values(x: np.ndarray, name: str) -> None:
     n_samples = x.shape[1]
     for idx in range(x.shape[0]):
@@ -281,7 +241,7 @@ def ctransform(x: np.ndarray | list[float] | tuple[float, ...]) -> np.ndarray:
 def copnorm(x: np.ndarray | list[float] | tuple[float, ...]) -> np.ndarray:
     """Copula-normalize values along the last axis."""
 
-    return _NORM_PPF(ctransform(x))
+    return sp_special.ndtri(ctransform(x))
 
 
 def _copnorm_slice_reference(x: np.ndarray) -> np.ndarray:
@@ -289,8 +249,10 @@ def _copnorm_slice_reference(x: np.ndarray) -> np.ndarray:
     for page in range(x.shape[0]):
         order = np.argsort(x[page, :])
         ranks = np.empty(x.shape[1], dtype=np.int64)
+        probs = ranks.astype(float)
         ranks[order] = np.arange(1, x.shape[1] + 1, dtype=np.int64)
-        out[page, :] = np.asarray(_NORM_PPF(ranks / float(x.shape[1] + 1)), dtype=out.dtype)
+        probs = ranks / float(x.shape[1] + 1)
+        out[page, :] = np.asarray(sp_special.ndtri(probs), dtype=out.dtype)
     return out
 
 
@@ -450,8 +412,6 @@ def _mi_model_dg(
 
     weights = counts / float(y_arr.shape[1])
     return (hunc - float(np.sum(weights * hcond))) / math.log(2.0)
-
-
 def gcmi_model_cd(
     x: np.ndarray | list[float] | tuple[float, ...],
     y: np.ndarray | list[int] | tuple[int, ...],
@@ -464,7 +424,7 @@ def gcmi_model_cd(
     Ym_int = _require_integral(Ym, "Ym")
     if y_arr.size != x_arr.shape[1]:
         raise ValueError("number of trials do not match")
-    if y_arr.min() != 0 or y_arr.max() != Ym_int - 1:
+    if y_arr.min() < 0 or y_arr.max() > Ym_int - 1:
         raise ValueError("values of discrete variable y are out of bounds")
 
     _warn_repeated_values(x_arr, "x")
@@ -566,7 +526,7 @@ def gcmi_mixture_cd(
     Ym_int = _require_integral(Ym, "Ym")
     if y_arr.size != x_arr.shape[1]:
         raise ValueError("number of trials do not match")
-    if y_arr.min() != 0 or y_arr.max() != Ym_int - 1:
+    if y_arr.min() < 0 or y_arr.max() > Ym_int - 1:
         raise ValueError("values of discrete variable y are out of bounds")
 
     _warn_repeated_values(x_arr, "x")
@@ -679,7 +639,7 @@ def gccmi_ccd(
     Zm_int = _require_integral(Zm, "Zm")
     if y_arr.shape[1] != x_arr.shape[1] or z_arr.size != x_arr.shape[1]:
         raise ValueError("number of trials do not match")
-    if z_arr.min() != 0 or z_arr.max() != Zm_int - 1:
+    if z_arr.min() < 0 or z_arr.max() > Zm_int - 1:
         raise ValueError("values of discrete variable z are out of bounds")
 
     _warn_repeated_values(x_arr, "x")

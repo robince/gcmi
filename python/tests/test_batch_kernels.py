@@ -8,6 +8,9 @@ import pytest
 
 import gcmi
 
+HAS_NUMBA = importlib.util.find_spec("numba") is not None
+requires_numba = pytest.mark.skipif(not HAS_NUMBA, reason="numba is not installed")
+
 
 @pytest.fixture(autouse=True)
 def restore_backend() -> None:
@@ -36,12 +39,16 @@ def test_copnorm_slice_reference_and_numba_follow_legacy_rank_policy() -> None:
     expected = np.asarray(expected, dtype=np.float32)
 
     reference = gcmi.copnorm_slice(x, backend="reference")
+    if not HAS_NUMBA:
+        np.testing.assert_allclose(reference, expected, rtol=1e-6, atol=1e-6)
+        return
     numba = gcmi.copnorm_slice(x, backend="numba")
     np.testing.assert_allclose(reference, expected, rtol=1e-6, atol=1e-6)
     np.testing.assert_allclose(numba, reference, rtol=1e-6, atol=1e-6)
     assert numba.dtype == np.float32
 
 
+@requires_numba
 def test_info_c1d_slice_matches_pagewise_scalar_for_reference_and_numba() -> None:
     rng = np.random.default_rng(0)
     x = rng.standard_normal((5, 48))
@@ -52,6 +59,7 @@ def test_info_c1d_slice_matches_pagewise_scalar_for_reference_and_numba() -> Non
     np.testing.assert_allclose(gcmi.info_c1d_slice(x, y, 4, backend="numba"), expected)
 
 
+@requires_numba
 def test_info_cd_slice_matches_pagewise_scalar_for_reference_and_numba() -> None:
     rng = np.random.default_rng(1)
     x = rng.standard_normal((4, 3, 60))
@@ -62,6 +70,7 @@ def test_info_cd_slice_matches_pagewise_scalar_for_reference_and_numba() -> None
     np.testing.assert_allclose(gcmi.info_cd_slice(x, y, 5, backend="numba"), expected)
 
 
+@requires_numba
 def test_info_dc_slice_matches_symmetric_scalar_formula_for_reference_and_numba() -> None:
     rng = np.random.default_rng(2)
     x = np.vstack(
@@ -78,6 +87,7 @@ def test_info_dc_slice_matches_symmetric_scalar_formula_for_reference_and_numba(
     np.testing.assert_allclose(gcmi.info_dc_slice(x, y, 4, backend="numba"), expected)
 
 
+@requires_numba
 def test_info_cc_slice_matches_pagewise_scalar_for_reference_and_numba() -> None:
     rng = np.random.default_rng(3)
     x = rng.standard_normal((6, 2, 64))
@@ -88,6 +98,7 @@ def test_info_cc_slice_matches_pagewise_scalar_for_reference_and_numba() -> None
     np.testing.assert_allclose(gcmi.info_cc_slice(x, y, backend="numba"), expected)
 
 
+@requires_numba
 def test_info_cc_multi_and_indexed_match_pagewise_scalar_for_reference_and_numba() -> None:
     rng = np.random.default_rng(4)
     x = rng.standard_normal((5, 2, 80))
@@ -109,6 +120,7 @@ def test_info_cc_multi_and_indexed_match_pagewise_scalar_for_reference_and_numba
     )
 
 
+@requires_numba
 def test_batch_kernels_support_float32_with_relaxed_tolerance() -> None:
     rng = np.random.default_rng(5)
     x_cd = rng.standard_normal((4, 2, 48), dtype=np.float32)
@@ -127,6 +139,7 @@ def test_batch_kernels_support_float32_with_relaxed_tolerance() -> None:
     np.testing.assert_allclose(cc_numba, cc_ref, rtol=1e-5, atol=1e-6)
 
 
+@requires_numba
 def test_backend_controls_and_auto_dispatch() -> None:
     rng = np.random.default_rng(6)
     x = rng.standard_normal((3, 2, 40))
