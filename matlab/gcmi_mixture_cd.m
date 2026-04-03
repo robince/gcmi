@@ -33,17 +33,14 @@ if size(y,1) ~= Ntrl
     error('gcmi_mixture_cd: number of trials do not match');
 end
 
+validate_discrete_labels(y, Ym, 'gcmi_mixture_cd', 'y');
+
 % check for repeated values
 for xi=1:Nvar
     if length(unique(x(:,xi)))./Ntrl < 0.9
         warning('Input x has more than 10% repeated values.')
         break
     end
-end
-
-% check values of discrete variable
-if min(y)~=0 || max(y)~=(Ym-1) || any(round(y)~=y)
-    error('Values of discrete variable y are not correct')
 end
 
 % copula normalise each class
@@ -67,4 +64,3 @@ cx = cell2mat(groupdat);
 newy = cell2mat(yval);
 % Gaussian mixture MI
 I = mi_mixture_gd(cx,newy,Ym);
-

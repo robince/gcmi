@@ -1,4 +1,4 @@
-function I = gcmi_ccc(x, y, z)
+function I = gccmi_ccc(x, y, z)
 % GCCMI_CCC Gaussian-Copula CMI between three continuous variables.
 %   I = gccmi_ccc(x,y,z) returns the CMI between two (possibly multidimensional)
 %   continuous variables, x and y, conditioned on a third, z, estimated via a 
@@ -25,7 +25,7 @@ Nvary = size(y,2);
 Nvarz = size(z,2);
 
 if (size(y,1) ~= Ntrl) || (size(z,1) ~= Ntrl)
-    error('gccmi_ggg: number of trials do not match')
+    error('gccmi_ccc: number of trials do not match')
 end
 
 % check for repeated values
@@ -54,4 +54,3 @@ cz = copnorm(z);
 
 % parametric Gaussian CMI
 I = cmi_ggg(cx,cy,cz,true,true);
-

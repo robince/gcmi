@@ -1,4 +1,4 @@
-function [CMI I] = gcmi_ccd(x, y, z, Zm)
+function [CMI I] = gccmi_ccd(x, y, z, Zm)
 % GCCMI_CCD Gaussian-Copula CMI between 2 continuous variables conditioned on 
 %           a discrete variable.
 %   [CMI I] = gccmi_ccd(x,y,z,Zm) returns the CMI between two (possibly
@@ -18,19 +18,19 @@ if isvector(y)
     y = y(:);
 end
 if ndims(x)~=2 || ndims(y)~=2
-    error('gccmi_cc: input arrays should be 2d')
+    error('gccmi_ccd: input arrays should be 2d')
 end
 if isvector(z)
     z = z(:);
 else
-    error('gccmi_ggd: only univariate discrete variable supported');
+    error('gccmi_ccd: only univariate discrete variable supported');
 end
 Ntrl = size(x,1);
 Nvarx = size(x,2);
 Nvary = size(y,2);
 
 if (size(y,1) ~= Ntrl) || (size(z,1) ~= Ntrl)
-    error('gccmi_ggd: number of trials do not match')
+    error('gccmi_ccd: number of trials do not match')
 end
 
 % check for repeated values
@@ -47,9 +47,7 @@ for yi=1:Nvary
     end
 end
 % check values of discrete variable
-if min(z)~=0 || max(z)~=(Zm-1) || any(round(z)~=z)
-    error('Values of discrete variable z are not correct')
-end
+validate_discrete_labels(z, Zm, 'gccmi_ccd', 'z');
 
 % calculate gcmi for each z value
 Icond = zeros(Zm,1);
@@ -73,4 +71,3 @@ CMI = Pz*Icond;
 
 % full mutual information with copnorm for each z value
 I = mi_gg(cell2mat(cx),cell2mat(cy),true,false);
-

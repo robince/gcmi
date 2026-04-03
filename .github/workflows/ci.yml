@@ -1,0 +1,45 @@
+name: CI
+
+on:
+  push:
+  pull_request:
+
+jobs:
+  python:
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        python-version: ["3.10", "3.13"]
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: ${{ matrix.python-version }}
+
+      - name: Upgrade pip
+        run: python -m pip install --upgrade pip
+
+      - name: Install test dependencies
+        run: python -m pip install pytest
+
+      - name: Install Python package
+        run: python -m pip install -e ./python
+
+      - name: Run Python tests
+        run: python -m pytest python/tests -q
+
+  matlab-octave:
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install Octave
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y octave
+
+      - name: Run MATLAB regression checks in Octave
+        run: octave --quiet --eval "addpath(fullfile(pwd, 'matlab', 'tests')); run_gcmi_regression_tests();"

@@ -8,6 +8,19 @@ bioRxiv [doi:10.1101/043745](http://dx.doi.org/10.1101/043745)
 
 Each of these scripts will download the required data file if it is not be available, so please take care if you are on a slow or metered internet connection. The data files can be downloaded manually from [https://www.robince.net/data/gcmi](https://www.robince.net/data/gcmi).
 
+For the simplest setup, add the repository root to the MATLAB path once and call `setup_gcmi`:
+
+```matlab
+addpath('/path/to/gcmi')
+setup_gcmi
+```
+
+If you want the tutorial helper scripts on the path as well, call:
+
+```matlab
+setup_gcmi('IncludeExamples', true)
+```
+
 ## [`discrete_eeg.m`](discrete_eeg.m)
 
 This script covers the analyses in Section 4.1, with a full cap event-related EEG data set with 2 discrete stimulus classes. Topics covered include:

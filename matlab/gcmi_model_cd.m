@@ -30,6 +30,8 @@ if size(y,1) ~= Ntrl
     error('gcmi_model_cd: number of trials do not match');
 end
 
+validate_discrete_labels(y, Ym, 'gcmi_model_cd', 'y');
+
 % check for repeated values
 for xi=1:Nvar
     if length(unique(x(:,xi)))./Ntrl < 0.9
@@ -38,13 +40,7 @@ for xi=1:Nvar
     end
 end
 
-% check values of discrete variable
-if min(y)~=0 || max(y)~=(Ym-1) || any(round(y)~=y)
-    error('Values of discrete variable y are not correct')
-end
-
 % copula normalisation
 cx = copnorm(x);
 % parametric Gaussian MI
 I = mi_model_gd(cx,y,Ym,true,true);
-

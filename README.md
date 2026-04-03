@@ -16,11 +16,53 @@ The [`matlab_examples`](matlab_examples) directory contains tutorial example scr
 
 #### Matlab
 
-Add the contents of the `matlab` directory to your Matlab path.
+From the repository root, add the package with:
+
+```matlab
+addpath(pwd);
+setup_gcmi
+```
+
+If you also want the example scripts on your path:
+
+```matlab
+setup_gcmi('IncludeExamples', true)
+```
 
 #### Python
 
-Put `gcmi.py` somewhere on your `PYTHONPATH` or in your working directory. `import gcmi` and then prefix the functions below with the module name, e.g. `gcmi.gcmi_cc(x,y)`.
+Install the Python package from this repo's `python/` subdirectory. For a GitHub checkout:
+
+```bash
+pip install "git+<repo-url>.git#subdirectory=python"
+```
+
+If you prefer `uv`:
+
+```bash
+uv pip install "git+<repo-url>.git#subdirectory=python"
+```
+
+For local development, `pip install -e python` works from the repository root. Then `import gcmi` and prefix the functions below with the module name, e.g. `gcmi.gcmi_cc(x,y)`.
+
+## Testing
+
+#### Python
+
+From the repository root:
+
+```bash
+python/.venv/bin/python -m pytest python/tests -q
+```
+
+#### Matlab / Octave
+
+Add the regression test directory and run:
+
+```matlab
+addpath(fullfile(pwd, 'matlab', 'tests'));
+run_gcmi_regression_tests
+```
 
 ## Usage
 
@@ -95,7 +137,7 @@ These functions calculate information theoretic quantities (mi: mutual informati
 
     Calculate MI between a (possibly multidimensional) Gaussian variable x and a discrete y (with values between 0 and Ym-1 inclusive). This uses a Gaussian mixture model.
 
-*  `I = cmi_ggg(x,y,biascorrect)` 
+*  `I = cmi_ggg(x,y,z,biascorrect)` 
 
     Calculate CMI between two (possibly multidimensional) Gaussian variables x and y conditioned on a third, z. 
 
@@ -129,6 +171,7 @@ The figure above shows the results of `mi_model_gd` calculated with 100 trials e
 
 ## Version history
 
+* 0.5 - modern packaging and CI for Python, MATLAB setup helper and regression tests, improved validation, and MATLAB API cleanup
 * 0.4 - add vectorised functions for Matlab 
 * 0.3 - Change `mi_mixture` from an unconditional copnorm to a more faithful mixture model based on robust measures  of location and  scale
 * 0.2 - Rename `mi_gd` functions to `mi_model_` and add `mi_mixture`
