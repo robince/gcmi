@@ -11,3 +11,5 @@ build/
 dist/
 benchmarks/runs/
 matlab/cpp_mex/bin/
+scratch/
+.claude/settings.local.json

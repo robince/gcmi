@@ -12,9 +12,10 @@ function output_dir = run_matlab_benchmarks(varargin)
 
 root = fileparts(fileparts(mfilename('fullpath')));
 addpath(fullfile(root, 'matlab'));
-addpath(fullfile(root, 'extern', 'gcmi_mex'));
 
 opts = parse_inputs(root, varargin{:});
+add_optional_paths(opts.LegacyPaths);
+add_optional_paths(opts.OptimizedPaths);
 fixtures = load_fixtures(fullfile(root, 'benchmarks', 'fixtures_manifest.json'), opts.FixtureIds);
 run_id = make_run_id(root);
 output_dir = fullfile(opts.OutputRoot, run_id);
@@ -26,6 +27,7 @@ results = {};
 for fi = 1:numel(fixtures)
     fixture = fixtures(fi);
     data = fixture_data(fixture);
+    data = prepare_benchmark_data(fixture, data, opts.OptimizedLabelEncoding);
 
     ref_record = measure_fixture(fixture, data, 'matlab_reference', 1, opts.Repeat, opts);
     ref_record.run_id = run_id;
@@ -56,16 +58,43 @@ p.addParameter('OutputRoot', fullfile(root, 'benchmarks', 'runs'), @(x) ischar(x
 p.addParameter('Notes', '', @(x) ischar(x) || isstring(x));
 p.addParameter('OptimizedLabel', 'matlab_mex', @(x) ischar(x) || isstring(x));
 p.addParameter('OptimizedFunctions', default_optimized_functions(), @isstruct);
+p.addParameter('LegacyPaths', fullfile(root, 'extern', 'gcmi_mex'), @(x) ischar(x) || isstring(x) || iscell(x));
+p.addParameter('OptimizedPaths', {}, @(x) ischar(x) || isstring(x) || iscell(x));
+p.addParameter('OptimizedLabelEncoding', 'legacy_one_based', @(x) ischar(x) || isstring(x));
 p.parse(varargin{:});
 
 opts = p.Results;
 opts.OutputRoot = char(opts.OutputRoot);
 opts.Notes = char(opts.Notes);
 opts.OptimizedLabel = char(opts.OptimizedLabel);
+opts.LegacyPaths = normalize_paths(opts.LegacyPaths);
+opts.OptimizedPaths = normalize_paths(opts.OptimizedPaths);
+opts.OptimizedLabelEncoding = char(opts.OptimizedLabelEncoding);
 if ischar(opts.FixtureIds) || isstring(opts.FixtureIds)
     opts.FixtureIds = cellstr(opts.FixtureIds);
 end
 opts.ThreadCounts = unique(double(opts.ThreadCounts(:)'));
+end
+
+function paths = normalize_paths(value)
+if isempty(value)
+    paths = {};
+elseif ischar(value) || isstring(value)
+    paths = cellstr(value);
+elseif iscell(value)
+    paths = cellfun(@char, value, 'UniformOutput', false);
+else
+    error('run_matlab_benchmarks: invalid path input')
+end
+paths = paths(~cellfun(@isempty, paths));
+end
+
+function add_optional_paths(paths)
+for i = 1:numel(paths)
+    if exist(paths{i}, 'dir')
+        addpath(paths{i});
+    end
+end
 end
 
 function counts = default_thread_counts()
@@ -192,6 +221,33 @@ switch fixture.kernel
 end
 end
 
+function data = prepare_benchmark_data(fixture, data, optimizedLabelEncoding)
+switch fixture.kernel
+    case 'info_cc_slice'
+        data.optimized_X = permute(data.X, [1 3 2]);
+        data.optimized_bias = biasterms_cc(fixture.xdim, fixture.ydim, fixture.ntrl);
+    case 'info_cc_multi'
+        data.optimized_X = permute(data.X, [1 3 2]);
+        data.optimized_Y = permute(data.Y, [1 3 2]);
+        data.optimized_bias = biasterms_cc(fixture.xdim, fixture.ydim, fixture.ntrl);
+    case 'info_cc_slice_indexed'
+        data.optimized_X = permute(data.X, [1 3 2]);
+        data.optimized_Xidx = int32(double(data.Xidx) + 1);
+        data.optimized_bias = biasterms_cc(fixture.xdim, fixture.ydim, fixture.ntrl);
+    case 'info_c1d_slice'
+        data.optimized_labels = encode_discrete_labels(data.Y, optimizedLabelEncoding);
+        data.optimized_bincount = histcounts(double(data.Y), -0.5:1:(fixture.ym - 0.5));
+        data.optimized_bias = biasterms_cd(1, fixture.ntrl, data.optimized_bincount);
+    case 'info_cd_slice'
+        data.optimized_X = permute(data.X, [3 1 2]);
+        data.optimized_labels = encode_discrete_labels(data.Y, optimizedLabelEncoding);
+        data.optimized_bincount = histcounts(double(data.Y), -0.5:1:(fixture.ym - 0.5));
+        data.optimized_bias = biasterms_cd(fixture.xdim, fixture.ntrl, data.optimized_bincount);
+    case 'info_dc_slice_bc'
+        data.optimized_X = encode_discrete_labels(data.X, optimizedLabelEncoding);
+end
+end
+
 function dtype = matlab_float_class(name)
 name = char(name);
 switch name
@@ -288,7 +344,7 @@ switch implementation
     case 'matlab_reference'
         out = dispatch_reference(fixture, data);
     otherwise
-        out = dispatch_optimized(fixture, data, thread_count, opts.OptimizedFunctions);
+        out = dispatch_optimized(fixture, data, thread_count, opts.OptimizedFunctions, opts.OptimizedLabelEncoding);
 end
 end
 
@@ -322,38 +378,42 @@ switch fixture.kernel
 end
 end
 
-function out = dispatch_optimized(fixture, data, thread_count, fmap)
+function out = dispatch_optimized(fixture, data, thread_count, fmap, encoding)
 fname = mex_function_name(fmap, fixture.kernel);
 switch fixture.kernel
     case 'copnorm_slice'
         out = feval(fname, data.X, thread_count);
     case 'info_cc_slice'
-        mexX = permute(data.X, [1 3 2]);
-        out = feval(fname, mexX, fixture.xdim, data.Y, fixture.ntrl, thread_count);
-        out = out - biasterms_cc(fixture.xdim, fixture.ydim, fixture.ntrl);
+        out = feval(fname, data.optimized_X, fixture.xdim, data.Y, fixture.ntrl, thread_count);
+        out = out - data.optimized_bias;
     case 'info_cc_multi'
-        mexX = permute(data.X, [1 3 2]);
-        mexY = permute(data.Y, [1 3 2]);
-        out = feval(fname, mexX, fixture.xdim, mexY, fixture.ydim, fixture.ntrl, thread_count);
-        out = out - biasterms_cc(fixture.xdim, fixture.ydim, fixture.ntrl);
+        out = feval(fname, data.optimized_X, fixture.xdim, data.optimized_Y, fixture.ydim, fixture.ntrl, thread_count);
+        out = out - data.optimized_bias;
     case 'info_cc_slice_indexed'
-        mexX = permute(data.X, [1 3 2]);
-        mexIdx = int32(double(data.Xidx) + 1);
-        out = feval(fname, mexX, fixture.xdim, mexIdx, data.Y, fixture.ydim, fixture.ntrl, thread_count);
-        out = out - biasterms_cc(fixture.xdim, fixture.ydim, fixture.ntrl);
+        out = feval(fname, data.optimized_X, fixture.xdim, data.optimized_Xidx, data.Y, fixture.ydim, fixture.ntrl, thread_count);
+        out = out - data.optimized_bias;
     case 'info_c1d_slice'
-        bincount = histcounts(double(data.Y), -0.5:1:(fixture.ym - 0.5));
-        out = feval(fname, data.X, int16(double(data.Y) + 1), fixture.ym, fixture.ntrl, thread_count);
-        out = out - biasterms_cd(1, fixture.ntrl, bincount);
+        out = feval(fname, data.X, data.optimized_labels, fixture.ym, fixture.ntrl, thread_count);
+        out = out - data.optimized_bias;
     case 'info_cd_slice'
-        bincount = histcounts(double(data.Y), -0.5:1:(fixture.ym - 0.5));
-        mexX = permute(data.X, [3 1 2]);
-        out = feval(fname, mexX, fixture.xdim, int16(double(data.Y) + 1), fixture.ym, fixture.ntrl, thread_count);
-        out = out - biasterms_cd(fixture.xdim, fixture.ntrl, bincount);
+        out = feval(fname, data.optimized_X, fixture.xdim, data.optimized_labels, fixture.ym, fixture.ntrl, thread_count);
+        out = out - data.optimized_bias;
     case 'info_dc_slice_bc'
-        out = feval(fname, int16(double(data.X) + 1), fixture.xm, data.Y, fixture.ntrl, thread_count);
+        out = feval(fname, data.optimized_X, fixture.xm, data.Y, fixture.ntrl, thread_count);
     otherwise
         error('run_matlab_benchmarks:UnsupportedKernel', 'Unsupported kernel: %s', fixture.kernel);
+end
+end
+
+function labels = encode_discrete_labels(labelsIn, encoding)
+switch encoding
+    case 'legacy_one_based'
+        labels = int16(double(labelsIn) + 1);
+    case 'zero_based'
+        labels = int32(double(labelsIn));
+    otherwise
+        error('run_matlab_benchmarks:UnsupportedLabelEncoding', ...
+            'Unsupported optimized label encoding: %s', encoding);
 end
 end
 

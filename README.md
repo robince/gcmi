@@ -23,6 +23,9 @@ addpath(pwd);
 setup_gcmi
 ```
 
+If a matching compiled native runtime exists under `matlab/cpp_mex/bin/<release>/<mexext>/`,
+`setup_gcmi` adds it automatically.
+
 If you also want the example scripts on your path:
 
 ```matlab
@@ -82,6 +85,71 @@ addpath(fullfile(pwd, 'matlab', 'tests'));
 run_gcmi_regression_tests
 ```
 
+To compile and smoke-test the new C++ MEX implementation in MATLAB `R2024b`:
+
+```matlab
+addpath(pwd);
+buildtool test
+```
+
+## Optimized MATLAB API
+
+The new native optimized MATLAB implementation lives under `matlab/cpp_mex/`.
+When compiled binaries exist under `matlab/cpp_mex/bin/<release>/<mexext>/`,
+`setup_gcmi` adds that runtime directory automatically by default.
+
+The currently supported direct native entrypoints are:
+
+- `gcmi_cpp_ping`
+- `gcmi_cpp_blas_probe`
+- `gcmi_cpp_omp_probe`
+- `gcmi_cpp_runtime_probe`
+- `info_cc_slice_cpp`
+- `info_cd_slice_cpp`
+
+The two estimator entrypoints currently exposed for direct use are:
+
+```matlab
+I = info_cc_slice_cpp(X, Xdim, Y, Ntrl, Nthread)
+I = info_cd_slice_cpp(X, Xdim, Y, Ym, Ntrl, Nthread)
+```
+
+with the following array layouts:
+
+| Entrypoint | X layout | Other inputs | Output |
+| :-- | :-- | :-- | :-- |
+| `info_cc_slice_cpp` | `[Ntrl, Xdim, Npage]` | `Y`: `[Ntrl, Ydim]` | `1 x Npage` |
+| `info_cd_slice_cpp` | `[Xdim, Ntrl, Npage]` | `Y`: labels of length `Ntrl`, `Ym`: number of classes | `1 x Npage` |
+
+Example direct calls:
+
+```matlab
+nativeX = permute(x, [1 3 2]);   % x starts as [Ntrl, Npage, Xdim]
+I = info_cc_slice_cpp(nativeX, Xdim, y, Ntrl, 4);
+```
+
+```matlab
+nativeX = permute(x, [3 1 2]);   % x starts as [Ntrl, Npage, Xdim]
+labels = int32(y);               % labels must already be zero-based
+I = info_cd_slice_cpp(nativeX, Xdim, labels, Ym, Ntrl, 4);
+```
+
+### Native vs legacy MEX label conventions
+
+The new C++ MEX entrypoints and the legacy Fortran MEX path do not use the same
+direct-call label convention:
+
+| Path | Direct discrete labels |
+| :-- | :-- |
+| MATLAB / Python public APIs | `0 .. M-1` |
+| New C++ MEX entrypoints in `matlab/cpp_mex/` | `0 .. M-1` |
+| Legacy direct MEX calls in `extern/gcmi_mex` | historically `1 .. M` |
+
+This matters mainly for direct MEX use. The benchmark harness adapts labels for
+the legacy MEX path automatically, but direct calls to `info_cd_slice_cpp` must
+receive zero-based labels and direct calls to the legacy MEX kernels must keep
+their historical one-based convention.
+
 ## Usage
 
 This is an overview of the functions available. Fuller descriptions of function arguments are provided in the in-line documentaion (Python docstrings, Matlab help strings).
@@ -96,6 +164,8 @@ Please note a crucial difference in the interface between the Python and Matlab 
 | Python   | samples LAST axis (columns) |
 
 Discrete inputs are passed as two arguments, the vector of values over samples y, and an integer parameter Ym specifying the size of the discrete space. In Python discrete variables should be stored in an integer data type array; in Matlab a double is used but should contain only integer values. y takes values between `0` and `Ym-1` inclusive. Empty classes are not supported.
+
+The new MATLAB C++ MEX rewrite under `matlab/cpp_mex/` follows the same zero-based discrete-label convention for its direct native entrypoints. This differs from the historical direct-call convention used by the legacy Fortran MEX layer in `extern/gcmi_mex`, which uses `1 .. M`.
 
 Care should be taken with continuous variables that contain many repeated values. The copula transform depends on a rank ordering and is therefore not well defined in such cases. Possible approaches include repeated calculations while jittering the data with low amplitude noise to avoid numerically equivalent values, or using binning and discrete methods. In the Python implementation, the scalar `ctransform` / `copnorm` functions and the batched `copnorm_slice` path use deterministic but not identical tie handling. `copnorm_slice` follows the legacy fast batch-ranking convention used by the benchmark and optimized path, so for tied data it may differ slightly from applying scalar `copnorm` page by page. For non-tied data they are expected to agree.
 
