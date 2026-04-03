@@ -4,7 +4,7 @@ build-backend = "hatchling.build"
 
 [project]
 name = "gcmi"
-version = "0.4.0"
+version = "0.5.0"
 description = "Gaussian-copula mutual information estimators"
 requires-python = ">=3.10"
 dependencies = [

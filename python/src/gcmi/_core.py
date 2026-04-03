@@ -13,7 +13,7 @@ from numbers import Integral
 import numpy as np
 from scipy import special as sp_special
 
-__version__ = "0.4.0"
+from ._version import __version__
 
 __all__ = [
     "ctransform",
