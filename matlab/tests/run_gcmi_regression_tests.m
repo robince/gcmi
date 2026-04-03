@@ -52,18 +52,18 @@ assert_close(actual, expected, 1e-12, 'gcmi_cc wrapper');
 end
 
 function test_gccmi_ccc_wrapper()
-x = [0.2; 1.3; 2.1; 3.7; 4.4];
-y = [-0.7; 0.9; 1.8; 2.6; 3.5];
-z = [1.0; 2.2; 3.3; 4.1; 5.4];
+x = [3.0; 1.0; 2.0; 4.0];
+y = [4.0; 2.0; 1.0; 3.0];
+z = [1.0; 4.0; 2.0; 3.0];
 expected = cmi_ggg(copnorm(x), copnorm(y), copnorm(z), true, true);
 actual = gccmi_ccc(x, y, z);
 assert_close(actual, expected, 1e-12, 'gccmi_ccc wrapper');
 end
 
 function test_gccmi_ccd_wrapper()
-x = [0.5; 1.4; 2.3; 3.2];
-y = [3.1; 2.2; 1.3; 0.4];
-z = [0; 0; 1; 1];
+x = [0.0; 1.0; 2.0; 0.3; 1.7; 2.8];
+y = [2.0; 0.0; 1.0; 1.1; 2.7; 0.4];
+z = [0; 0; 0; 1; 1; 1];
 [cmi, jointI] = gccmi_ccd(x, y, z, 2);
 
 Icond = zeros(2,1);
