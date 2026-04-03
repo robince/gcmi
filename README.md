@@ -37,10 +37,28 @@ Install the Python package from this repo's `python/` subdirectory. For a GitHub
 pip install "git+<repo-url>.git#subdirectory=python"
 ```
 
+If you prefer the explicit named direct-reference form:
+
+```bash
+pip install "gcmi @ git+https://github.com/robince/gcmi.git#subdirectory=python"
+```
+
 If you prefer `uv`:
 
 ```bash
 uv pip install "git+<repo-url>.git#subdirectory=python"
+```
+
+If you want to add it as a project dependency with `uv`:
+
+```bash
+uv add "git+https://github.com/robince/gcmi.git#subdirectory=python"
+```
+
+If you prefer the explicit named direct-reference form:
+
+```bash
+uv add "gcmi @ git+https://github.com/robince/gcmi.git#subdirectory=python"
 ```
 
 For local development, `pip install -e python` works from the repository root. Then `import gcmi` and prefix the functions below with the module name, e.g. `gcmi.gcmi_cc(x,y)`.
