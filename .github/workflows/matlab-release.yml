@@ -29,7 +29,7 @@ jobs:
           tasks: test package
 
       - name: Upload packaged runtime artifact
-        uses: actions/upload-artifact@v5
+        uses: actions/upload-artifact@v6
         with:
           name: gcmi-cpp-mex-R2024b-macos
           path: build/matlab/packages/gcmi_cpp_mex_2024b_*.zip
@@ -37,9 +37,25 @@ jobs:
 
       - name: Publish GitHub release assets
         if: startsWith(github.ref, 'refs/tags/')
-        uses: softprops/action-gh-release@v2
-        with:
-          files: build/matlab/packages/gcmi_cpp_mex_2024b_*.zip
+        shell: bash
+        env:
+          GH_TOKEN: ${{ github.token }}
+          TAG: ${{ github.ref_name }}
+        run: |
+          set -euo pipefail
+          shopt -s nullglob
+
+          files=(build/matlab/packages/gcmi_cpp_mex_2024b_*.zip)
+          if [ ${#files[@]} -eq 0 ]; then
+            echo "No release assets found for tag ${TAG}" >&2
+            exit 1
+          fi
+
+          if ! gh release view "${TAG}" >/dev/null 2>&1; then
+            gh release create "${TAG}" --title "${TAG}" --notes "" || gh release view "${TAG}" >/dev/null
+          fi
+
+          gh release upload "${TAG}" "${files[@]}" --clobber
 
   matlab-linux-r2024b:
     name: MATLAB Linux x86_64 R2024b
@@ -60,7 +76,7 @@ jobs:
           tasks: test package
 
       - name: Upload packaged runtime artifact
-        uses: actions/upload-artifact@v5
+        uses: actions/upload-artifact@v6
         with:
           name: gcmi-cpp-mex-R2024b-linux-x86_64
           path: build/matlab/packages/gcmi_cpp_mex_2024b_*.zip
@@ -68,6 +84,22 @@ jobs:
 
       - name: Publish GitHub release assets
         if: startsWith(github.ref, 'refs/tags/')
-        uses: softprops/action-gh-release@v2
-        with:
-          files: build/matlab/packages/gcmi_cpp_mex_2024b_*.zip
+        shell: bash
+        env:
+          GH_TOKEN: ${{ github.token }}
+          TAG: ${{ github.ref_name }}
+        run: |
+          set -euo pipefail
+          shopt -s nullglob
+
+          files=(build/matlab/packages/gcmi_cpp_mex_2024b_*.zip)
+          if [ ${#files[@]} -eq 0 ]; then
+            echo "No release assets found for tag ${TAG}" >&2
+            exit 1
+          fi
+
+          if ! gh release view "${TAG}" >/dev/null 2>&1; then
+            gh release create "${TAG}" --title "${TAG}" --notes "" || gh release view "${TAG}" >/dev/null
+          fi
+
+          gh release upload "${TAG}" "${files[@]}" --clobber
