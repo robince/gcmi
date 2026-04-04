@@ -6,6 +6,12 @@
 
 namespace gcmi {
 
+std::vector<double> copnorm_slice_kernel(
+    const double* x,
+    mwSize nTrials,
+    mwSize nPages,
+    mwSize threadCount);
+
 void info_cc_slice(
     const double* x,
     mwSize nTrials,

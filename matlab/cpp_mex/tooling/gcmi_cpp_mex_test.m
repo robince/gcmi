@@ -19,7 +19,7 @@ addpath(fullfile(cfg.RepoRoot, 'matlab'));
 
 rng(42, 'twister');
 results = struct('passed', 0, 'failed', 0, 'details', {{}});
-tests = {@test_ping, @test_probes, @test_info_cc_slice, @test_info_cd_slice};
+tests = {@test_ping, @test_probes, @test_copnorm_slice, @test_info_cc_slice, @test_info_cd_slice};
 for i = 1:numel(tests)
     name = func2str(tests{i});
     try
@@ -55,6 +55,21 @@ end
         assert(isequal(out, (1:9).'));
         rt = gcmi_cpp_runtime_probe(randn(8, 5), 2);
         assert(numel(rt) == 5);
+    end
+
+    function test_copnorm_slice()
+        x = [3.0 1.0 2.0 4.0; 1.5 -1.0 0.0 2.0; 1.1 1.2 2.3 2.4];
+        actual = copnorm_slice_cpp(x, 2);
+        if exist('copnorm_slice_omp_c_double', 'file') == 3
+            legacy = copnorm_slice_omp_c_double(x, 2);
+            assert(max(abs(actual(:) - legacy(:))) < 1e-12);
+        else
+            expected = zeros(size(x));
+            for page = 1:size(x, 2)
+                expected(:, page) = copnorm(x(:, page));
+            end
+            assert(max(abs(actual(:) - expected(:))) < 1e-8);
+        end
     end
 
     function test_info_cc_slice()

@@ -101,7 +101,7 @@ targets(end+1) = make_target(cfg, 'gcmi_cpp_ping', {'gcmi_cpp_ping.cpp'}, {}, fa
 targets(end+1) = make_target(cfg, 'gcmi_cpp_blas_probe', {'gcmi_cpp_blas_probe.cpp'}, {'-lmwblas', '-lmwlapack'}, false);
 targets(end+1) = make_target(cfg, 'gcmi_cpp_omp_probe', {'gcmi_cpp_omp_probe.cpp'}, {}, true);
 targets(end+1) = make_target(cfg, 'gcmi_cpp_runtime_probe', {'gcmi_cpp_runtime_probe.cpp'}, {'-lmwblas', '-lmwlapack'}, true);
-targets(end+1) = make_target(cfg, 'copnorm_slice_cpp', {'copnorm_slice_cpp.cpp', 'gcmi_kernels.cpp'}, {}, true);
+targets(end+1) = make_target(cfg, 'copnorm_slice_cpp', {'copnorm_slice_cpp.cpp', 'copnorm_kernel.cpp'}, {}, true);
 targets(end+1) = make_target(cfg, 'info_cc_slice_cpp', {'info_cc_slice_cpp.cpp', 'gcmi_kernels.cpp'}, {'-lmwblas', '-lmwlapack'}, true);
 targets(end+1) = make_target(cfg, 'info_cc_slice_cpp_capi', {'info_cc_slice_cpp_capi.c'}, {'-lmwblas', '-lmwlapack'}, true, '-R2017b', true, {'gcmi_kernels.cpp', 'info_cc_slice_bridge.cpp'});
 targets(end+1) = make_target(cfg, 'info_cd_slice_cpp', {'info_cd_slice_cpp.cpp', 'gcmi_kernels.cpp'}, {'-lmwblas', '-lmwlapack'}, true);
@@ -119,12 +119,9 @@ if nargin < 8
 end
 target = struct();
 target.name = name;
-target.sources = cellfun(@(x) fullfile(cfg.MexDir, x), mexSources, 'UniformOutput', false);
+target.sources = cellfun(@(x) i_resolve_source(cfg, x), mexSources, 'UniformOutput', false);
 target.object_sources = cellfun(@(x) i_resolve_source(cfg, x), objectSources, 'UniformOutput', false);
 target.libs = libs;
-if any(strcmp('gcmi_kernels.cpp', mexSources))
-    target.sources = cellfun(@(x) i_resolve_source(cfg, x), mexSources, 'UniformOutput', false);
-end
 target.use_openmp = useOpenMP;
 target.api = api;
 target.classic_c_wrapper = classicCWrapper;
@@ -184,7 +181,7 @@ mex(linkArgs{:});
 end
 
 function pathName = i_resolve_source(cfg, name)
-if strcmp(name, 'gcmi_kernels.cpp') || strcmp(name, 'info_cc_slice_bridge.cpp')
+if strcmp(name, 'gcmi_kernels.cpp') || strcmp(name, 'info_cc_slice_bridge.cpp') || strcmp(name, 'copnorm_kernel.cpp')
     pathName = fullfile(cfg.SourceDir, name);
 else
     pathName = fullfile(cfg.MexDir, name);
