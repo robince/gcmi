@@ -65,8 +65,8 @@ void mexFunction(int nlhs, mxArray* plhs[], int nrhs, const mxArray* prhs[]) {
         threads = 1;
     }
 
-    if (mxGetNumberOfDimensions(prhs[0]) != 3) {
-        mexErrMsgIdAndTxt("info_cc_slice_cpp_capi:shape", "X must have shape [Ntrl Xdim Npage].");
+    if (mxGetNumberOfDimensions(prhs[0]) != 2 && mxGetNumberOfDimensions(prhs[0]) != 3) {
+        mexErrMsgIdAndTxt("info_cc_slice_cpp_capi:shape", "X must have shape [Ntrl Xdim Npage] or [Ntrl Xdim] for a single page.");
     }
     if (mxGetNumberOfDimensions(prhs[2]) != 2) {
         mexErrMsgIdAndTxt("info_cc_slice_cpp_capi:shape", "Y must have shape [Ntrl Ydim].");
@@ -75,13 +75,13 @@ void mexFunction(int nlhs, mxArray* plhs[], int nrhs, const mxArray* prhs[]) {
     xDims = mxGetDimensions(prhs[0]);
     yDims = mxGetDimensions(prhs[2]);
     if (xDims[0] != ntrl || xDims[1] != xdim) {
-        mexErrMsgIdAndTxt("info_cc_slice_cpp_capi:shape", "X must have shape [Ntrl Xdim Npage].");
+        mexErrMsgIdAndTxt("info_cc_slice_cpp_capi:shape", "X must have shape [Ntrl Xdim Npage] or [Ntrl Xdim] for a single page.");
     }
     if (yDims[0] != ntrl) {
         mexErrMsgIdAndTxt("info_cc_slice_cpp_capi:shape", "Y must have shape [Ntrl Ydim].");
     }
 
-    npage = xDims[2];
+    npage = mxGetNumberOfDimensions(prhs[0]) == 2 ? 1 : xDims[2];
     ydim = yDims[1];
     plhs[0] = mxCreateDoubleMatrix(1, npage, mxREAL);
     out = mxGetPr(plhs[0]);

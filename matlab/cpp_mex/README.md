@@ -34,8 +34,8 @@ Expected layouts:
 | Entrypoint | X layout | Other inputs | Output |
 | :-- | :-- | :-- | :-- |
 | `copnorm_slice_cpp` | `[Ntrl, Npage]` | `Nthread` | `Ntrl x Npage` |
-| `info_cc_slice_cpp` | `[Ntrl, Xdim, Npage]` | `Y`: `[Ntrl, Ydim]` | `1 x Npage` |
-| `info_cd_slice_cpp` | `[Xdim, Ntrl, Npage]` | `Y`: labels of length `Ntrl` | `1 x Npage` |
+| `info_cc_slice_cpp` | `[Ntrl, Xdim, Npage]` or `[Ntrl, Xdim]` for a single page | `Y`: `[Ntrl, Ydim]` | `1 x Npage` |
+| `info_cd_slice_cpp` | `[Xdim, Ntrl, Npage]` or `[Xdim, Ntrl]` for a single page | `Y`: labels of length `Ntrl` | `1 x Npage` |
 
 Typical reshaping from the main MATLAB reference layout:
 

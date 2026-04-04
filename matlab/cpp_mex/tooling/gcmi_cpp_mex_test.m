@@ -18,8 +18,8 @@ end
 addpath(fullfile(cfg.RepoRoot, 'matlab'));
 
 rng(42, 'twister');
-results = struct('passed', 0, 'failed', 0, 'details', {{}});
-tests = {@test_ping, @test_probes, @test_copnorm_slice, @test_info_cc_slice, @test_info_cd_slice};
+    results = struct('passed', 0, 'failed', 0, 'details', {{}});
+    tests = {@test_ping, @test_probes, @test_copnorm_slice, @test_info_cc_slice, @test_info_cc_single_page, @test_info_cd_slice, @test_info_cd_single_page};
 for i = 1:numel(tests)
     name = func2str(tests{i});
     try
@@ -96,6 +96,28 @@ end
         end
     end
 
+    function test_info_cc_single_page()
+        ntrl = 20;
+        xdim = 2;
+        ydim = 3;
+        x = randn(ntrl, 1, xdim);
+        y = randn(ntrl, ydim);
+        expected = mi_gg_vec(x, y, false, true);
+        nativeX = permute(x, [1 3 2]);
+        singlePageX = reshape(nativeX, [ntrl, xdim]);
+        actual = info_cc_slice_cpp(singlePageX, xdim, y, ntrl, 2);
+        assert(max(abs(actual(:) - expected(:))) < 1e-12);
+
+        if exist('info_cc_slice_cpp_capi', 'file') == 3
+            capi = info_cc_slice_cpp_capi(singlePageX, xdim, y, ntrl, 2);
+            assert(max(abs(actual(:) - capi(:))) < 1e-12);
+            xBad = randn(2, 1);
+            yBad = randn(2, 1);
+            assert_error_contains(@() info_cc_slice_cpp_capi(xBad, 1, yBad, 2, 2), ...
+                'info_cc_slice_cpp requires Ntrl > Xdim + Ydim');
+        end
+    end
+
     function test_info_cd_slice()
         x = randn(2, 24, 5);
         y = int32(mod((0:23)', 4));
@@ -105,6 +127,30 @@ end
         if exist('info_cd_slice_nobc_omp', 'file') == 3
             legacy = info_cd_slice_nobc_omp(x, 2, int16(double(y) + 1), 4, 24, 2);
             assert(max(abs(actual(:) - legacy(:))) < 1e-12);
+        end
+    end
+
+    function test_info_cd_single_page()
+        x = randn(2, 24, 1);
+        y = int32(mod((0:23)', 4));
+        expected = mi_model_gd_vec(permute(x, [2 3 1]), y, 4, false, false);
+        singlePageX = reshape(x, [2, 24]);
+        actual = info_cd_slice_cpp(singlePageX, 2, y, 4, 24, 2);
+        assert(max(abs(actual(:) - expected(:))) < 1e-12);
+    end
+
+    function assert_error_contains(fun, messageFragment)
+        didError = false;
+        try
+            fun();
+        catch ME
+            didError = true;
+            if isempty(strfind(ME.message, messageFragment))
+                error('Unexpected error message: %s', ME.message);
+            end
+        end
+        if ~didError
+            error('Expected error containing "%s" was not raised', messageFragment);
         end
     end
 end

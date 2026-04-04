@@ -8,7 +8,6 @@ function results = run_gcmi_regression_tests()
 
 repoRoot = fileparts(fileparts(fileparts(mfilename('fullpath'))));
 addpath(repoRoot);
-addpath(fullfile(repoRoot, 'benchmarks'));
 setup_gcmi();
 
 tests = {
@@ -135,11 +134,5 @@ catch ME
 end
 if ~didError
     error('Expected error containing "%s" was not raised', messageFragment)
-end
-end
-
-function i_rmdir_if_exists(pathname)
-if exist(pathname, 'dir')
-    rmdir(pathname, 's');
 end
 end

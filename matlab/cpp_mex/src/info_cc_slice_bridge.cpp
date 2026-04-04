@@ -2,6 +2,7 @@
 
 #include <cstddef>
 #include <exception>
+#include <string>
 
 extern "C" void gcmi_info_cc_slice_bridge(
     const double* x,
@@ -13,6 +14,7 @@ extern "C" void gcmi_info_cc_slice_bridge(
     std::size_t threads,
     double* output,
     const char** error_message) {
+    static thread_local std::string error_storage;
     try {
         gcmi::info_cc_slice(
             x,
@@ -23,9 +25,11 @@ extern "C" void gcmi_info_cc_slice_bridge(
             static_cast<gcmi::mwSize>(ydim),
             static_cast<gcmi::mwSize>(threads),
             output);
+        error_storage.clear();
         *error_message = nullptr;
     } catch (const std::exception& ex) {
-        *error_message = ex.what();
+        error_storage = ex.what();
+        *error_message = error_storage.c_str();
     } catch (...) {
         *error_message = "unknown error";
     }

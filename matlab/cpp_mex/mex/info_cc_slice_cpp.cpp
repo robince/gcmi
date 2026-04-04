@@ -17,14 +17,14 @@ public:
 
         const auto xDims = x.getDimensions();
         const auto yDims = y.getDimensions();
-        if (xDims.size() != 3 || xDims[0] != ntrl || xDims[1] != xdim) {
-            fail("info_cc_slice_cpp:shape", "X must have shape [Ntrl Xdim Npage]");
+        if ((xDims.size() != 2 && xDims.size() != 3) || xDims[0] != ntrl || xDims[1] != xdim) {
+            fail("info_cc_slice_cpp:shape", "X must have shape [Ntrl Xdim Npage] or [Ntrl Xdim] for a single page");
         }
         if (yDims.size() != 2 || yDims[0] != ntrl) {
             fail("info_cc_slice_cpp:shape", "Y must have shape [Ntrl Ydim]");
         }
 
-        const auto npage = xDims[2];
+        const auto npage = xDims.size() == 2 ? 1 : xDims[2];
         const auto ydim = yDims[1];
         auto out = factory_.createArray<double>({1, npage});
         gcmi::info_cc_slice(raw_data(x), ntrl, xdim, npage, raw_data(y), ydim, threads, raw_data(out));
