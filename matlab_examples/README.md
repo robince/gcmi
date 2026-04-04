@@ -46,5 +46,25 @@ This script covers the analyses in Section 4.3, with single sensor event-related
 - Calculating MI in the multivariate repsonse consisting of raw voltage together with the single-trial instaneous temporal derivative.
 - Calculating the emergence of novel MI over time.
 
+## [`cpp_continuous_native.m`](cpp_continuous_native.m)
+
+This is a synthetic max-statistics example for the new optimized C++ MEX continuous/continuous kernel. It focuses on direct native use on a large page-wise problem rather than a full neuroimaging download workflow. Topics covered include:
+
+- Checking that the compiled native runtime is available through `setup_gcmi`.
+- Generating `1000` pages of `3D` Gaussian data with sparse planted covariance effects.
+- Running `100` permutations and using the maximum statistic across pages as a family-wise threshold.
+- Reshaping from MATLAB's vectorized layout to the native layout `[Ntrl, Xdim, Npage]`.
+- Comparing the observed native scan against `mi_gg_vec` on the same synthetic data.
+
+## [`cpp_discrete_native.m`](cpp_discrete_native.m)
+
+This is a synthetic max-statistics example for the new optimized C++ MEX continuous/discrete kernel. Topics covered include:
+
+- Preparing zero-based discrete labels for `info_cd_slice_cpp`.
+- Generating `1000` pages of `2D` Gaussian features with sparse planted class effects.
+- Running `100` label permutations and using the maximum statistic across pages as a family-wise threshold.
+- Reshaping from MATLAB's vectorized layout to the native layout `[Xdim, Ntrl, Npage]`.
+- Highlighting the direct-call requirement that labels must be in the range `0 .. Ym-1`.
+
 
 Questions / comments : robince@gmail.com
