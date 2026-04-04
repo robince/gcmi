@@ -18,7 +18,7 @@ jobs:
 
     steps:
       - name: Check out repository
-        uses: actions/checkout@v4
+        uses: actions/checkout@v5
 
       - name: Set up MATLAB
         uses: matlab-actions/setup-matlab@v3
@@ -26,12 +26,12 @@ jobs:
           release: R2024b
 
       - name: Build, smoke-test, and package native MEX runtime
-        uses: matlab-actions/run-build@v2
+        uses: matlab-actions/run-build@v3
         with:
           tasks: test package
 
       - name: Upload packaged runtime artifact
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v5
         with:
           name: gcmi-cpp-mex-R2024b-macos
           path: build/matlab/packages/gcmi_cpp_mex_2024b_*.zip
@@ -49,7 +49,7 @@ jobs:
 
     steps:
       - name: Check out repository
-        uses: actions/checkout@v4
+        uses: actions/checkout@v5
 
       - name: Set up MATLAB
         uses: matlab-actions/setup-matlab@v3
@@ -57,12 +57,12 @@ jobs:
           release: R2024b
 
       - name: Build, smoke-test, and package native MEX runtime
-        uses: matlab-actions/run-build@v2
+        uses: matlab-actions/run-build@v3
         with:
           tasks: test package
 
       - name: Upload packaged runtime artifact
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v5
         with:
           name: gcmi-cpp-mex-R2024b-linux-x86_64
           path: build/matlab/packages/gcmi_cpp_mex_2024b_*.zip
