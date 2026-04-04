@@ -505,14 +505,11 @@ def info_cc_slice_numba(
     bias_xy = _bias_correction(n_samples, x_dim + y_dim) if biascorrect else 0.0
 
     sy = np.zeros(y_dim, dtype=y.dtype)
-    syy = np.zeros((y_dim, y_dim), dtype=y.dtype)
     if not demeaned:
         for trial in range(n_samples):
             for i in range(y_dim):
                 value_i = y[i, trial]
                 sy[i] += value_i
-                for j in range(y_dim):
-                    syy[i, j] += value_i * y[j, trial]
 
     for page in prange(n_page):
         sx = np.zeros(x_dim, dtype=x.dtype)

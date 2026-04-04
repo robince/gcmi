@@ -390,7 +390,7 @@ switch fixture.kernel
         out = feval(fname, data.optimized_X, fixture.xdim, data.optimized_Y, fixture.ydim, fixture.ntrl, thread_count);
         out = out - data.optimized_bias;
     case 'info_cc_slice_indexed'
-        out = feval(fname, data.optimized_X, fixture.xdim, data.optimized_Xidx, data.Y, fixture.ydim, fixture.ntrl, thread_count);
+        out = call_info_cc_slice_indexed(fname, data.optimized_X, fixture.xdim, data.optimized_Xidx, data.Y, fixture.ydim, fixture.ntrl, thread_count);
         out = out - data.optimized_bias;
     case 'info_c1d_slice'
         out = feval(fname, data.X, data.optimized_labels, fixture.ym, fixture.ntrl, thread_count);
@@ -399,9 +399,67 @@ switch fixture.kernel
         out = feval(fname, data.optimized_X, fixture.xdim, data.optimized_labels, fixture.ym, fixture.ntrl, thread_count);
         out = out - data.optimized_bias;
     case 'info_dc_slice_bc'
-        out = feval(fname, data.optimized_X, fixture.xm, data.Y, fixture.ntrl, thread_count);
+        out = call_info_dc_slice_bc(fname, data.optimized_X, fixture.xm, data.Y, fixture.ntrl, thread_count);
     otherwise
         error('run_matlab_benchmarks:UnsupportedKernel', 'Unsupported kernel: %s', fixture.kernel);
+end
+end
+
+function out = call_info_cc_slice_indexed(fname, X, xdim, Xidx, Y, ydim, ntrl, thread_count)
+persistent legacy_signature_cache
+if isempty(legacy_signature_cache)
+    legacy_signature_cache = struct();
+end
+
+field_name = matlab.lang.makeValidName(fname);
+if isfield(legacy_signature_cache, field_name)
+    if legacy_signature_cache.(field_name) == 6
+        out = feval(fname, X, xdim, Xidx, Y, ntrl, thread_count);
+    else
+        out = feval(fname, X, xdim, Xidx, Y, ydim, ntrl, thread_count);
+    end
+    return
+end
+
+try
+    out = feval(fname, X, xdim, Xidx, Y, ydim, ntrl, thread_count);
+    legacy_signature_cache.(field_name) = 7;
+catch ME
+    if contains(ME.message, 'takes 6 inputs')
+        out = feval(fname, X, xdim, Xidx, Y, ntrl, thread_count);
+        legacy_signature_cache.(field_name) = 6;
+    else
+        rethrow(ME);
+    end
+end
+end
+
+function out = call_info_dc_slice_bc(fname, X, xm, Y, ntrl, thread_count)
+persistent dc_transpose_cache
+if isempty(dc_transpose_cache)
+    dc_transpose_cache = struct();
+end
+
+field_name = matlab.lang.makeValidName(fname);
+if isfield(dc_transpose_cache, field_name)
+    if dc_transpose_cache.(field_name)
+        out = feval(fname, X, xm, Y.', ntrl, thread_count);
+    else
+        out = feval(fname, X, xm, Y, ntrl, thread_count);
+    end
+    return
+end
+
+try
+    out = feval(fname, X, xm, Y, ntrl, thread_count);
+    dc_transpose_cache.(field_name) = false;
+catch ME
+    if contains(ME.message, 'Number of trials does not match data')
+        out = feval(fname, X, xm, Y.', ntrl, thread_count);
+        dc_transpose_cache.(field_name) = true;
+    else
+        rethrow(ME);
+    end
 end
 end
 
