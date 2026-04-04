@@ -94,6 +94,63 @@ def _logdet_from_covariance(cov: np.ndarray) -> float:
 
 
 @njit(cache=True, nogil=True)
+def _chol_logdet_upper_in_place(upper: np.ndarray) -> tuple[bool, float]:
+    dim = upper.shape[0]
+    logdet = 0.0
+    for col in range(dim):
+        for row in range(col):
+            value = upper[row, col]
+            for kk in range(row):
+                value -= upper[kk, row] * upper[kk, col]
+            value /= upper[row, row]
+            upper[row, col] = value
+
+        diag = upper[col, col]
+        for kk in range(col):
+            value = upper[kk, col]
+            diag -= value * value
+        if not (diag > 0.0):
+            return False, math.nan
+
+        root = math.sqrt(diag)
+        upper[col, col] = root
+        logdet += math.log(root)
+
+    return True, logdet
+
+
+@njit(cache=True, nogil=True)
+def _shared_continuous_stats_small(y: np.ndarray, biascorrect: bool, demeaned: bool) -> tuple[np.ndarray, float, np.ndarray]:
+    y_dim, n_samples = y.shape
+    sy = np.zeros(y_dim, dtype=y.dtype)
+    cy = np.zeros((y_dim, y_dim), dtype=y.dtype)
+
+    for trial in range(n_samples):
+        for col in range(y_dim):
+            y_col = y[col, trial]
+            sy[col] += y_col
+            for row in range(col + 1):
+                cy[row, col] += y[row, trial] * y_col
+
+    scale = 1.0 / (n_samples - 1.0)
+    alpha = -1.0 / n_samples
+    for col in range(y_dim):
+        for row in range(col + 1):
+            value = cy[row, col]
+            if not demeaned:
+                value += alpha * sy[row] * sy[col]
+            cy[row, col] = value * scale
+
+    cy_chol = cy.copy()
+    ok, hy = _chol_logdet_upper_in_place(cy_chol)
+    if not ok:
+        raise np.linalg.LinAlgError("Matrix is not positive definite.")
+    if biascorrect:
+        hy -= _bias_correction(n_samples, y_dim)
+    return cy, hy, sy
+
+
+@njit(cache=True, nogil=True)
 def _shared_continuous_stats(y: np.ndarray, biascorrect: bool, demeaned: bool) -> tuple[np.ndarray, float]:
     y_dim, n_samples = y.shape
     sy = np.zeros(y_dim, dtype=y.dtype)
@@ -352,6 +409,81 @@ def info_dc_slice_numba(x: np.ndarray, y: np.ndarray, n_classes: int, biascorrec
 
 
 @njit(cache=True, nogil=True, parallel=True)
+def _info_cc_slice_small_numba(
+    x: np.ndarray,
+    y: np.ndarray,
+    cy_upper: np.ndarray,
+    hy: float,
+    sy: np.ndarray,
+    biascorrect: bool,
+    demeaned: bool,
+) -> np.ndarray:
+    n_page, x_dim, n_samples = x.shape
+    y_dim = y.shape[0]
+    joint_dim = x_dim + y_dim
+    out = np.empty(n_page, dtype=x.dtype)
+
+    scale = 1.0 / (n_samples - 1.0)
+    alpha = -1.0 / n_samples
+    bias_x = _bias_correction(n_samples, x_dim) if biascorrect else 0.0
+    bias_xy = _bias_correction(n_samples, joint_dim) if biascorrect else 0.0
+
+    for page in prange(n_page):
+        sx = np.zeros(x_dim, dtype=x.dtype)
+        sxx = np.zeros((x_dim, x_dim), dtype=x.dtype)
+        cxy = np.zeros((x_dim, y_dim), dtype=x.dtype)
+
+        for trial in range(n_samples):
+            for col in range(x_dim):
+                x_col = x[page, col, trial]
+                sx[col] += x_col
+                for row in range(col + 1):
+                    sxx[row, col] += x[page, row, trial] * x_col
+                for row in range(y_dim):
+                    cxy[col, row] += x_col * y[row, trial]
+
+        for col in range(x_dim):
+            for row in range(col + 1):
+                value = sxx[row, col]
+                if not demeaned:
+                    value += alpha * sx[row] * sx[col]
+                sxx[row, col] = value * scale
+        for col in range(y_dim):
+            for row in range(x_dim):
+                value = cxy[row, col]
+                if not demeaned:
+                    value += alpha * sx[row] * sy[col]
+                cxy[row, col] = value * scale
+
+        joint = np.zeros((joint_dim, joint_dim), dtype=x.dtype)
+        for col in range(x_dim):
+            for row in range(col + 1):
+                joint[row, col] = sxx[row, col]
+        for col in range(y_dim):
+            for row in range(x_dim):
+                joint[row, x_dim + col] = cxy[row, col]
+        for col in range(y_dim):
+            for row in range(col + 1):
+                joint[x_dim + row, x_dim + col] = cy_upper[row, col]
+
+        ok_x, hx = _chol_logdet_upper_in_place(sxx)
+        if not ok_x:
+            out[page] = math.nan
+            continue
+        ok_xy, hxy = _chol_logdet_upper_in_place(joint)
+        if not ok_xy:
+            out[page] = math.nan
+            continue
+
+        if biascorrect:
+            hx -= bias_x
+            hxy -= bias_xy
+        out[page] = (hx + hy - hxy) / _LN2
+
+    return out
+
+
+@njit(cache=True, nogil=True, parallel=True)
 def info_cc_slice_numba(
     x: np.ndarray,
     y: np.ndarray,
@@ -362,6 +494,10 @@ def info_cc_slice_numba(
 ) -> np.ndarray:
     n_page, x_dim, n_samples = x.shape
     y_dim = y.shape[0]
+    if x_dim <= 4 and y_dim <= 4:
+        cy_upper, hy_small, sy = _shared_continuous_stats_small(y, biascorrect, demeaned)
+        return _info_cc_slice_small_numba(x, y, cy_upper, hy_small, sy, biascorrect, demeaned)
+
     out = np.empty(n_page, dtype=x.dtype)
 
     hy_term = hy
@@ -369,14 +505,11 @@ def info_cc_slice_numba(
     bias_xy = _bias_correction(n_samples, x_dim + y_dim) if biascorrect else 0.0
 
     sy = np.zeros(y_dim, dtype=y.dtype)
-    syy = np.zeros((y_dim, y_dim), dtype=y.dtype)
     if not demeaned:
         for trial in range(n_samples):
             for i in range(y_dim):
                 value_i = y[i, trial]
                 sy[i] += value_i
-                for j in range(y_dim):
-                    syy[i, j] += value_i * y[j, trial]
 
     for page in prange(n_page):
         sx = np.zeros(x_dim, dtype=x.dtype)

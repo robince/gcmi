@@ -161,6 +161,8 @@ Compatibility shim: [`python/gcmi.py`](python/gcmi.py)
 
 Source directory: [`matlab/`](matlab)
 
+Native rewrite directory: [`matlab/cpp_mex`](matlab/cpp_mex)
+
 ### Core public functions
 
 `ctransform.m`
@@ -234,7 +236,23 @@ Source directory: [`matlab/`](matlab)
 `setup_gcmi.m`
 
 - Repository-root helper for adding [`matlab/`](matlab) to the MATLAB path.
+- Auto-discovers matching compiled binaries under [`matlab/cpp_mex/bin`](matlab/cpp_mex/bin) for the current MATLAB release when present.
 - Optionally adds [`matlab_examples/`](matlab_examples) and can persist the path.
+
+### MATLAB C++ MEX rewrite
+
+The new native implementation work lives under [`matlab/cpp_mex`](matlab/cpp_mex).
+
+Current direct entrypoints include:
+
+- `gcmi_cpp_ping`
+- `gcmi_cpp_blas_probe`
+- `gcmi_cpp_omp_probe`
+- `gcmi_cpp_runtime_probe`
+- `info_cc_slice_cpp`
+- `info_cd_slice_cpp`
+
+For this rewrite path, discrete labels are accepted only as `0..M-1`.
 
 ### MATLAB vectorized functions
 

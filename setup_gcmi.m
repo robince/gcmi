@@ -1,6 +1,8 @@
 function addedPaths = setup_gcmi(varargin)
 %SETUP_GCMI Add the GCMI MATLAB package to the MATLAB path.
 %   setup_gcmi adds the matlab/ directory from this repository to the path.
+%   If a matching native C++ MEX runtime exists under matlab/cpp_mex/bin/,
+%   setup_gcmi also adds that directory automatically.
 %   setup_gcmi('IncludeExamples', true) also adds matlab_examples/.
 %   setup_gcmi('SavePath', true) persists the path with SAVEPATH.
 %
@@ -11,6 +13,7 @@ function addedPaths = setup_gcmi(varargin)
 p = inputParser;
 p.FunctionName = mfilename;
 addParameter(p, 'IncludeExamples', false, @(x) islogical(x) && isscalar(x));
+addParameter(p, 'IncludeNative', true, @(x) islogical(x) && isscalar(x));
 addParameter(p, 'SavePath', false, @(x) islogical(x) && isscalar(x));
 parse(p, varargin{:});
 opts = p.Results;
@@ -18,6 +21,7 @@ opts = p.Results;
 repoRoot = fileparts(mfilename('fullpath'));
 matlabDir = fullfile(repoRoot, 'matlab');
 exampleDir = fullfile(repoRoot, 'matlab_examples');
+nativeDir = i_find_native_dir(repoRoot);
 
 if ~exist(matlabDir, 'dir')
     error('setup_gcmi: matlab directory not found at %s', matlabDir)
@@ -25,6 +29,11 @@ end
 
 addedPaths = {matlabDir};
 addpath(matlabDir);
+
+if opts.IncludeNative && ~isempty(nativeDir) && exist(nativeDir, 'dir')
+    addpath(nativeDir);
+    addedPaths{end+1} = nativeDir;
+end
 
 if opts.IncludeExamples
     if exist(exampleDir, 'dir')
@@ -44,4 +53,26 @@ end
 
 if nargout == 0
     clear addedPaths
+end
+
+end
+
+function nativeDir = i_find_native_dir(repoRoot)
+% Prefer the exact release build for the current interpreter, but fall back
+% to any bundled native directory that matches the current mex extension.
+binRoot = fullfile(repoRoot, 'matlab', 'cpp_mex', 'bin');
+nativeDir = fullfile(binRoot, version('-release'), mexext);
+if exist(nativeDir, 'dir')
+    return
+end
+
+candidates = dir(fullfile(binRoot, '*', mexext));
+for i = 1:numel(candidates)
+    if candidates(i).isdir
+        nativeDir = fullfile(candidates(i).folder, candidates(i).name);
+        return
+    end
+end
+
+nativeDir = '';
 end
