@@ -428,6 +428,10 @@ if isa(name, 'function_handle')
         'OptimizedFunctions currently expects function names, not handles.');
 end
 name = char(name);
+if isempty(strtrim(name))
+    error('run_matlab_benchmarks:MissingOptimizedFunction', ...
+        'No optimized entrypoint configured for kernel %s', kernel);
+end
 if exist(name, 'file') ~= 3 && exist(name, 'file') ~= 2
     error('run_matlab_benchmarks:MissingOptimizedEntrypoint', ...
         'Optimized entrypoint %s was not found on the MATLAB path', name);

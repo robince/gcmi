@@ -65,7 +65,9 @@ if ~isempty(regexpi(name, 'microsoft visual c\+\+|msvc', 'once'))
     family = 'msvc';
 elseif ~isempty(regexpi(name, 'mingw', 'once'))
     family = 'gcc';
-elseif ~isempty(regexpi(name, 'clang|apple', 'once'))
+elseif ismac && ~isempty(regexpi(name, 'apple|clang', 'once'))
+    family = 'apple_clang';
+elseif ~isempty(regexpi(name, 'clang', 'once'))
     family = 'clang';
 elseif ~isempty(regexpi(name, 'gnu|g\+\+', 'once'))
     family = 'gcc';
@@ -97,9 +99,9 @@ switch family
         ompLinkFlags        = {};
         ompClassicLinkFlags = {};
         objExt              = '.obj';
-    case 'gcc'
-        % GCC (Linux and MinGW-w64 on Windows): -fopenmp covers both the
-        % compile-time header and the libgomp runtime link.
+    case {'gcc', 'clang'}
+        % GCC-compatible drivers, including non-Apple clang on Linux:
+        % -fopenmp handles both the compile-time flag and runtime link.
         % On Linux add rpath so MATLAB's own shared libs are found; on
         % Windows DLL search uses PATH so rpath is omitted.
         if ispc
@@ -115,10 +117,9 @@ switch family
             'LINKLIBS=$LINKLIBS -lstdc++'};
         objExt              = '.o';
     otherwise
-        % Apple Clang (and any unrecognised Clang variant): -Xpreprocessor
-        % passes -fopenmp through the driver to clang-cc1.  Link against
-        % MATLAB-bundled libomp and set rpath so the dylib is found at
-        % runtime without DYLD_LIBRARY_PATH.
+        % Apple Clang on macOS: -Xpreprocessor passes -fopenmp through the
+        % driver to clang-cc1. Link against MATLAB-bundled libomp and set
+        % rpath so the dylib is found at runtime without DYLD_LIBRARY_PATH.
         cxxStdFlag          = 'CXXFLAGS=$CXXFLAGS -std=c++17';
         ompCxxFlag          = ' -Xpreprocessor -fopenmp';
         ompLinkFlags        = { ...
@@ -132,9 +133,9 @@ end
 end
 
 function ompIncludeDir = i_find_omp_include(matlabRootDir, arch)
-% omp.h is not bundled alongside Apple Clang, so search for the copy
-% shipped with MATLAB.  GCC and MSVC include omp.h in their own toolchain
-% directories, so no extra search is needed on Linux or Windows.
+% Apple Clang does not ship omp.h, so search for the copy bundled with
+% MATLAB. GCC-compatible Linux and Windows toolchains provide omp.h via the
+% selected compiler configuration, so no extra search is needed there.
 ompIncludeDir = '';
 if ~ismac
     return

@@ -92,6 +92,8 @@ addpath(pwd);
 buildtool test
 ```
 
+The current native packaging and CI target macOS and Linux `x86_64`.
+
 ## Optimized MATLAB API
 
 The new native optimized MATLAB implementation lives under `matlab/cpp_mex/`.

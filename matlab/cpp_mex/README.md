@@ -13,14 +13,18 @@ The initial `R2024b` implementation currently provides:
   - `gcmi_cpp_omp_probe`
   - `gcmi_cpp_runtime_probe`
 - first real kernels:
+  - `copnorm_slice_cpp`
   - `info_cc_slice_cpp`
   - `info_cd_slice_cpp`
+
+The current build and release flow targets macOS and Linux `x86_64`.
 
 ## Direct entrypoint API
 
 The current estimator entrypoints are:
 
 ```matlab
+CX = copnorm_slice_cpp(X, Nthread)
 I = info_cc_slice_cpp(X, Xdim, Y, Ntrl, Nthread)
 I = info_cd_slice_cpp(X, Xdim, Y, Ym, Ntrl, Nthread)
 ```
@@ -29,6 +33,7 @@ Expected layouts:
 
 | Entrypoint | X layout | Other inputs | Output |
 | :-- | :-- | :-- | :-- |
+| `copnorm_slice_cpp` | `[Ntrl, Npage]` | `Nthread` | `Ntrl x Npage` |
 | `info_cc_slice_cpp` | `[Ntrl, Xdim, Npage]` | `Y`: `[Ntrl, Ydim]` | `1 x Npage` |
 | `info_cd_slice_cpp` | `[Xdim, Ntrl, Npage]` | `Y`: labels of length `Ntrl` | `1 x Npage` |
 

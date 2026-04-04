@@ -77,7 +77,12 @@ buildInfo = struct( ...
     'lapack_library', cfg.LapackLibrary, ...
     'targets', {requested}, ...
     'generated_at', char(datetime('now', TimeZone='local', Format='yyyy-MM-dd''T''HH:mm:ssXXX')));
-fid = fopen(fullfile(cfg.OutputDir, 'build-info.json'), 'w');
+buildInfoPath = fullfile(cfg.OutputDir, 'build-info.json');
+[fid, msg] = fopen(buildInfoPath, 'w');
+if fid < 0
+    error('gcmi_cpp_mex_compile:BuildInfoOpenFailed', ...
+        'Unable to open "%s" for writing: %s', buildInfoPath, msg);
+end
 cleanup = onCleanup(@() fclose(fid));
 fprintf(fid, '%s\n', jsonencode(buildInfo, PrettyPrint=true));
 end
@@ -96,6 +101,7 @@ targets(end+1) = make_target(cfg, 'gcmi_cpp_ping', {'gcmi_cpp_ping.cpp'}, {}, fa
 targets(end+1) = make_target(cfg, 'gcmi_cpp_blas_probe', {'gcmi_cpp_blas_probe.cpp'}, {'-lmwblas', '-lmwlapack'}, false);
 targets(end+1) = make_target(cfg, 'gcmi_cpp_omp_probe', {'gcmi_cpp_omp_probe.cpp'}, {}, true);
 targets(end+1) = make_target(cfg, 'gcmi_cpp_runtime_probe', {'gcmi_cpp_runtime_probe.cpp'}, {'-lmwblas', '-lmwlapack'}, true);
+targets(end+1) = make_target(cfg, 'copnorm_slice_cpp', {'copnorm_slice_cpp.cpp', 'gcmi_kernels.cpp'}, {}, true);
 targets(end+1) = make_target(cfg, 'info_cc_slice_cpp', {'info_cc_slice_cpp.cpp', 'gcmi_kernels.cpp'}, {'-lmwblas', '-lmwlapack'}, true);
 targets(end+1) = make_target(cfg, 'info_cc_slice_cpp_capi', {'info_cc_slice_cpp_capi.c'}, {'-lmwblas', '-lmwlapack'}, true, '-R2017b', true, {'gcmi_kernels.cpp', 'info_cc_slice_bridge.cpp'});
 targets(end+1) = make_target(cfg, 'info_cd_slice_cpp', {'info_cd_slice_cpp.cpp', 'gcmi_kernels.cpp'}, {'-lmwblas', '-lmwlapack'}, true);

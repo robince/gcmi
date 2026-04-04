@@ -33,6 +33,8 @@ inline BlasInt to_blas_int(mwSize value, const char* name) {
 inline std::vector<mwSize> count_labels(const std::vector<mwSignedIndex>& labels, mwSize nClasses) {
     std::vector<mwSize> counts(nClasses, 0);
     for (mwSignedIndex label : labels) {
+        require(label >= 0 && static_cast<mwSize>(label) < nClasses,
+                "label out of range in count_labels");
         counts[static_cast<std::size_t>(label)] += 1;
     }
     return counts;

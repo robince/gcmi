@@ -8,6 +8,7 @@ function results = run_gcmi_regression_tests()
 
 repoRoot = fileparts(fileparts(fileparts(mfilename('fullpath'))));
 addpath(repoRoot);
+addpath(fullfile(repoRoot, 'benchmarks'));
 setup_gcmi();
 
 tests = {
@@ -17,6 +18,7 @@ tests = {
     @test_vecchol_4x4
     @test_maxstar
     @test_empty_class_validation
+    @test_cpp_mex_function_map_runs_copnorm_slice
 };
 
 results = struct('passed', 0, 'failed', 0, 'details', {{}}); 
@@ -113,6 +115,21 @@ expect_error(@() mi_mixture_gd_vec(reshape(x, [4 1 1]), y, 3), 'empty discrete c
 expect_error(@() gccmi_ccd(x, y, z, 3), 'empty discrete classes are not supported');
 end
 
+function test_cpp_mex_function_map_runs_copnorm_slice()
+tmpRoot = tempname;
+cleanup = onCleanup(@() i_rmdir_if_exists(tmpRoot));
+outputDir = run_matlab_benchmarks( ...
+    'FixtureIds', {'copnorm_medium_f64'}, ...
+    'ThreadCounts', 1, ...
+    'Repeat', 1, ...
+    'OutputRoot', tmpRoot, ...
+    'OptimizedLabel', 'cpp_mex', ...
+    'OptimizedFunctions', cpp_mex_default_function_map(), ...
+    'OptimizedPaths', {}, ...
+    'LegacyPaths', {});
+assert(exist(outputDir, 'dir') == 7);
+end
+
 function assert_close(actual, expected, tolerance, label)
 if nargin < 4
     label = 'value';
@@ -134,5 +151,11 @@ catch ME
 end
 if ~didError
     error('Expected error containing "%s" was not raised', messageFragment)
+end
+end
+
+function i_rmdir_if_exists(pathname)
+if exist(pathname, 'dir')
+    rmdir(pathname, 's');
 end
 end
