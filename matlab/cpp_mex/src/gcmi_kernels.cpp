@@ -274,14 +274,15 @@ void info_cc_slice(
     }
 }
 
-std::vector<double> info_cd_slice(
+void info_cd_slice(
     const double* x,
     mwSize xDim,
     mwSize nTrials,
     mwSize nPages,
     const std::vector<mwSignedIndex>& labels,
     mwSize nClasses,
-    mwSize threadCount) {
+    mwSize threadCount,
+    double* output) {
     require(labels.size() == nTrials, "label count does not match Ntrl");
     auto counts = count_labels(labels, nClasses);
     for (mwSize group = 0; group < nClasses; ++group) {
@@ -295,7 +296,6 @@ std::vector<double> info_cd_slice(
     const double alpha = -1.0 / static_cast<double>(nTrials);
     const double alpha1 = 1.0 / static_cast<double>(nTrials - 1);
 
-    std::vector<double> output(nPages, nan_value());
     #pragma omp parallel num_threads(static_cast<int>(threadCount)) default(shared)
     {
         std::vector<double> sumX(xDim, 0.0);
@@ -366,7 +366,6 @@ std::vector<double> info_cd_slice(
         }
     }
 
-    return output;
 }
 
 }  // namespace gcmi

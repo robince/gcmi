@@ -62,14 +62,14 @@ inline double ndtri(double p) {
 
 }  // namespace
 
-std::vector<double> copnorm_slice_kernel(
+void copnorm_slice_kernel(
     const double* x,
     mwSize nTrials,
     mwSize nPages,
-    mwSize threadCount) {
-    std::vector<double> output(nTrials * nPages, 0.0);
+    mwSize threadCount,
+    double* output) {
     if (nTrials == 0 || nPages == 0) {
-        return output;
+        return;
     }
 
     const double denom = static_cast<double>(nTrials + 1);
@@ -94,14 +94,12 @@ std::vector<double> copnorm_slice_kernel(
                 return a < b;
             });
 
-            double* outPage = output.data() + static_cast<std::size_t>(page) * nTrials;
+            double* outPage = output + static_cast<std::size_t>(page) * nTrials;
             for (mwSize rank = 0; rank < nTrials; ++rank) {
                 outPage[order[rank]] = ndtri((static_cast<double>(rank) + 1.0) / denom);
             }
         }
     }
-
-    return output;
 }
 
 }  // namespace gcmi

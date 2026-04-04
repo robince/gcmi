@@ -19,10 +19,7 @@ public:
         const auto nTrials = dims[0];
         const auto nPages = dims[1];
         auto out = factory_.createArray<double>({nTrials, nPages});
-        auto normalized = gcmi::copnorm_slice_kernel(raw_data(x), nTrials, nPages, threads);
-        if (!normalized.empty()) {
-            std::copy(normalized.begin(), normalized.end(), raw_data(out));
-        }
+        gcmi::copnorm_slice_kernel(raw_data(x), nTrials, nPages, threads, raw_data(out));
         outputs[0] = out;
     }
 };

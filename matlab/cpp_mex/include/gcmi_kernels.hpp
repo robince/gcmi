@@ -6,11 +6,12 @@
 
 namespace gcmi {
 
-std::vector<double> copnorm_slice_kernel(
+void copnorm_slice_kernel(
     const double* x,
     mwSize nTrials,
     mwSize nPages,
-    mwSize threadCount);
+    mwSize threadCount,
+    double* output);
 
 void info_cc_slice(
     const double* x,
@@ -22,13 +23,14 @@ void info_cc_slice(
     mwSize threadCount,
     double* output);
 
-std::vector<double> info_cd_slice(
+void info_cd_slice(
     const double* x,
     mwSize xDim,
     mwSize nTrials,
     mwSize nPages,
     const std::vector<mwSignedIndex>& labels,
     mwSize nClasses,
-    mwSize threadCount);
+    mwSize threadCount,
+    double* output);
 
 }  // namespace gcmi

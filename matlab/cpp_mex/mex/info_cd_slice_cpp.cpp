@@ -22,9 +22,8 @@ public:
 
         const auto labels = parse_zero_based_labels(inputs[2], ntrl, ym, "Y");
         const auto npage = xDims.size() == 2 ? 1 : xDims[2];
-        auto info = gcmi::info_cd_slice(raw_data(x), xdim, ntrl, npage, labels, ym, threads);
         auto out = factory_.createArray<double>({1, npage});
-        std::copy(info.begin(), info.end(), raw_data(out));
+        gcmi::info_cd_slice(raw_data(x), xdim, ntrl, npage, labels, ym, threads, raw_data(out));
         outputs[0] = out;
     }
 };
