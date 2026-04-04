@@ -2,8 +2,6 @@ name: MATLAB Release
 
 on:
   push:
-    branches:
-      - matlab-mex-cpp
     tags:
       - "v*"
   workflow_dispatch:
