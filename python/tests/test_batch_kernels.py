@@ -99,6 +99,29 @@ def test_info_cc_slice_matches_pagewise_scalar_for_reference_and_numba() -> None
 
 
 @requires_numba
+@pytest.mark.parametrize("xdim", [1, 2, 3, 4])
+@pytest.mark.parametrize("ydim", [1, 2, 3, 4])
+@pytest.mark.parametrize("biascorrect", [False, True])
+@pytest.mark.parametrize("demeaned", [False, True])
+def test_info_cc_slice_small_numba_matches_reference_across_flags(
+    xdim: int,
+    ydim: int,
+    biascorrect: bool,
+    demeaned: bool,
+) -> None:
+    rng = np.random.default_rng(30_000 + 1_000 * xdim + 100 * ydim + 10 * int(biascorrect) + int(demeaned))
+    x = rng.standard_normal((3, xdim, 64))
+    y = rng.standard_normal((ydim, 64))
+    if demeaned:
+        x = x - x.mean(axis=2, keepdims=True)
+        y = y - y.mean(axis=1, keepdims=True)
+
+    expected = gcmi.info_cc_slice(x, y, biascorrect=biascorrect, demeaned=demeaned, backend="reference")
+    actual = gcmi.info_cc_slice(x, y, biascorrect=biascorrect, demeaned=demeaned, backend="numba")
+    np.testing.assert_allclose(actual, expected, rtol=1e-12, atol=1e-12)
+
+
+@requires_numba
 def test_info_cc_multi_and_indexed_match_pagewise_scalar_for_reference_and_numba() -> None:
     rng = np.random.default_rng(4)
     x = rng.standard_normal((5, 2, 80))
