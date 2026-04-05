@@ -10,18 +10,27 @@ permissions:
   contents: write
 
 jobs:
-  matlab-macos-r2024b:
-    name: MATLAB macOS R2024b
+  matlab-macos:
+    name: MATLAB macOS ${{ matrix.release }}
     runs-on: macos-15
+    strategy:
+      matrix:
+        release: [R2024b]
 
     steps:
       - name: Check out repository
         uses: actions/checkout@v5
 
+      - name: Set release ID
+        shell: bash
+        run: |
+          release="${{ matrix.release }}"
+          echo "RELEASE_ID=${release#R}" >> "$GITHUB_ENV"
+
       - name: Set up MATLAB
         uses: matlab-actions/setup-matlab@v3
         with:
-          release: R2024b
+          release: ${{ matrix.release }}
 
       - name: Build, smoke-test, and package native MEX runtime
         uses: matlab-actions/run-build@v3
@@ -31,8 +40,8 @@ jobs:
       - name: Upload packaged runtime artifact
         uses: actions/upload-artifact@v6
         with:
-          name: gcmi-cpp-mex-R2024b-macos
-          path: build/matlab/packages/gcmi_cpp_mex_2024b_*.zip
+          name: gcmi-cpp-mex-${{ matrix.release }}-macos
+          path: build/matlab/packages/gcmi_cpp_mex_${{ env.RELEASE_ID }}_*.zip
           if-no-files-found: error
 
       - name: Publish GitHub release assets
@@ -45,7 +54,7 @@ jobs:
           set -euo pipefail
           shopt -s nullglob
 
-          files=(build/matlab/packages/gcmi_cpp_mex_2024b_*.zip)
+          files=(build/matlab/packages/gcmi_cpp_mex_${RELEASE_ID}_*.zip)
           if [ ${#files[@]} -eq 0 ]; then
             echo "No release assets found for tag ${TAG}" >&2
             exit 1
@@ -57,29 +66,47 @@ jobs:
 
           gh release upload "${TAG}" "${files[@]}" --clobber
 
-  matlab-linux-r2024b:
-    name: MATLAB Linux x86_64 R2024b
-    runs-on: ubuntu-22.04
+  matlab-linux-ubuntu:
+    name: MATLAB Linux x86_64 ${{ matrix.release }} (${{ matrix.ubuntu }})
+    runs-on: ${{ matrix.ubuntu }}
+    strategy:
+      matrix:
+        ubuntu: [ubuntu-20.04, ubuntu-22.04, ubuntu-24.04]
+        release: [R2024b]
 
     steps:
       - name: Check out repository
         uses: actions/checkout@v5
 
+      - name: Set release ID
+        shell: bash
+        run: |
+          release="${{ matrix.release }}"
+          echo "RELEASE_ID=${release#R}" >> "$GITHUB_ENV"
+
       - name: Set up MATLAB
         uses: matlab-actions/setup-matlab@v3
         with:
-          release: R2024b
+          release: ${{ matrix.release }}
 
       - name: Build, smoke-test, and package native MEX runtime
         uses: matlab-actions/run-build@v3
         with:
           tasks: test package
 
+      - name: Rename artifact with Ubuntu version
+        shell: bash
+        run: |
+          set -euo pipefail
+          for f in build/matlab/packages/gcmi_cpp_mex_${RELEASE_ID}_*.zip; do
+            mv "$f" "${f%.zip}_${{ matrix.ubuntu }}.zip"
+          done
+
       - name: Upload packaged runtime artifact
         uses: actions/upload-artifact@v6
         with:
-          name: gcmi-cpp-mex-R2024b-linux-x86_64
-          path: build/matlab/packages/gcmi_cpp_mex_2024b_*.zip
+          name: gcmi-cpp-mex-${{ matrix.release }}-linux-x86_64-${{ matrix.ubuntu }}
+          path: build/matlab/packages/gcmi_cpp_mex_${{ env.RELEASE_ID }}_*_${{ matrix.ubuntu }}.zip
           if-no-files-found: error
 
       - name: Publish GitHub release assets
@@ -92,7 +119,87 @@ jobs:
           set -euo pipefail
           shopt -s nullglob
 
-          files=(build/matlab/packages/gcmi_cpp_mex_2024b_*.zip)
+          files=(build/matlab/packages/gcmi_cpp_mex_${RELEASE_ID}_*_${{ matrix.ubuntu }}.zip)
+          if [ ${#files[@]} -eq 0 ]; then
+            echo "No release assets found for tag ${TAG}" >&2
+            exit 1
+          fi
+
+          if ! gh release view "${TAG}" >/dev/null 2>&1; then
+            gh release create "${TAG}" --title "${TAG}" --notes "" || gh release view "${TAG}" >/dev/null
+          fi
+
+          gh release upload "${TAG}" "${files[@]}" --clobber
+
+  # NOTE: matlab-actions are JavaScript actions that run on the host Ubuntu
+  # runner, not inside the container. MATLAB will be installed and compile on
+  # Ubuntu — the container provides the OS environment for shell steps only.
+  # True Rocky-native binaries would require self-hosted Rocky runners.
+  matlab-linux-rocky:
+    name: MATLAB Linux x86_64 ${{ matrix.release }} (rocky-${{ matrix.rocky_version }})
+    runs-on: ubuntu-22.04
+    container: rockylinux:${{ matrix.rocky_version }}
+    strategy:
+      matrix:
+        rocky_version: ["9"]
+        release: [R2024b]
+
+    steps:
+      - name: Install system dependencies
+        run: |
+          dnf install -y epel-release || true
+          dnf install -y \
+            git \
+            java-11-openjdk \
+            libXt libXrandr libXfixes libXrender libXext libX11 \
+            alsa-lib atk cups-libs gtk3 nss pango \
+            unzip wget ca-certificates
+
+      - name: Check out repository
+        uses: actions/checkout@v5
+
+      - name: Set release ID
+        shell: bash
+        run: |
+          release="${{ matrix.release }}"
+          echo "RELEASE_ID=${release#R}" >> "$GITHUB_ENV"
+
+      - name: Set up MATLAB
+        uses: matlab-actions/setup-matlab@v3
+        with:
+          release: ${{ matrix.release }}
+
+      - name: Build, smoke-test, and package native MEX runtime
+        uses: matlab-actions/run-build@v3
+        with:
+          tasks: test package
+
+      - name: Rename artifact with Rocky version
+        shell: bash
+        run: |
+          set -euo pipefail
+          for f in build/matlab/packages/gcmi_cpp_mex_${RELEASE_ID}_*.zip; do
+            mv "$f" "${f%.zip}_rocky-${{ matrix.rocky_version }}.zip"
+          done
+
+      - name: Upload packaged runtime artifact
+        uses: actions/upload-artifact@v6
+        with:
+          name: gcmi-cpp-mex-${{ matrix.release }}-linux-x86_64-rocky-${{ matrix.rocky_version }}
+          path: build/matlab/packages/gcmi_cpp_mex_${{ env.RELEASE_ID }}_*_rocky-${{ matrix.rocky_version }}.zip
+          if-no-files-found: error
+
+      - name: Publish GitHub release assets
+        if: startsWith(github.ref, 'refs/tags/')
+        shell: bash
+        env:
+          GH_TOKEN: ${{ github.token }}
+          TAG: ${{ github.ref_name }}
+        run: |
+          set -euo pipefail
+          shopt -s nullglob
+
+          files=(build/matlab/packages/gcmi_cpp_mex_${RELEASE_ID}_*_rocky-${{ matrix.rocky_version }}.zip)
           if [ ${#files[@]} -eq 0 ]; then
             echo "No release assets found for tag ${TAG}" >&2
             exit 1
