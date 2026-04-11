@@ -34,9 +34,8 @@ HX = sum(log(diag(chC))) + 0.5*Nvarx*(log(2*pi)+1);
 
 ln2 = log(2);
 if biascorrect
-    psiterms = psi((Ntrl - (1:Nvarx))/2) / 2;
-    dterm = (ln2 - log(Ntrl-1)) / 2;
-    HX = (HX - Nvarx*dterm - sum(psiterms));
+    H = (HX / ln2) - bias_ent_g_bits(Nvarx, Ntrl);
+    return
 end
 
 % convert to bits
