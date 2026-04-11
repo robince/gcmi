@@ -101,12 +101,9 @@ HXYZ = sum(log(vecdiag(chCxyz)),2); % + 0.5*(Nvarx+Nvary+Nvarz)*log(2*pi*exp(1))
 
 ln2 = log(2);
 if biascorrect
-    psiterms = psi((Ntrlx - (1:Nvarxyz))/2) / 2;
-    dterm = (ln2 - log(Ntrlx-1)) / 2;
-    HZ   = (HZ   - Nvarz*dterm   - sum(psiterms(1:Nvarz)));
-    HXZ  = (HXZ  - Nvarxz*dterm  - sum(psiterms(1:Nvarxz)));
-    HYZ  = (HYZ  - Nvaryz*dterm  - sum(psiterms(1:Nvaryz)));
-    HXYZ = (HXYZ - Nvarxyz*dterm - sum(psiterms));
+    I = ((HXZ + HYZ - HXYZ - HZ) / ln2) ...
+        - bias_cmi_ggg_bits(Nvarx, Nvary, Nvarz, Ntrlx);
+    return
 end
 
 % convert to bits

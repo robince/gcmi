@@ -26,6 +26,10 @@
 %
 % Utilities:
 %   ctransform                 Empirical copula transform
+%   bias_cmi_ggg_bits          Analytic Gaussian conditional MI bias term in bits
+%   bias_ent_g_bits            Analytic Gaussian entropy bias term in bits
+%   bias_mi_gd_bits            Analytic Gaussian/discrete MI bias term in bits
+%   bias_mi_gg_bits            Analytic Gaussian/Gaussian MI bias term in bits
 %   copnorm                    Copula normalization
 %   maxstar                    Stable log-sum-exp helper
 %   vecchol                    Vectorized Cholesky decomposition

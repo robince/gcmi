@@ -63,13 +63,9 @@ HXY = sum(log(diag(chCxy))); % + 0.5*(Nvarx+Nvary)*log(2*pi*exp(1));
 
 ln2 = log(2);
 if biascorrect
-    psiterms = psi((Ntrl - (1:Nvarxy))/2) / 2;
-    dterm = (ln2 - log(Ntrl-1)) / 2;
-    HX = (HX - Nvarx*dterm - sum(psiterms(1:Nvarx)));
-    HY = (HY - Nvary*dterm - sum(psiterms(1:Nvary)));
-    HXY = (HXY - Nvarxy*dterm - sum(psiterms));
+    I = ((HX + HY - HXY) / ln2) - bias_mi_gg_bits(Nvarx, Nvary, Ntrl);
+    return
 end
 
 % convert to bits
 I = (HX + HY - HXY) / ln2;
-

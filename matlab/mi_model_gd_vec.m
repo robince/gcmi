@@ -123,26 +123,6 @@ end
 
 % apply bias corrections
 ln2 = log(2);
-if biascorrect
-
-  vars = 1:Xdim;
-  
-  psiterms_unc = psi((Ntrl - vars)/2) / 2;
-  dterm_unc    = (ln2 - log(Ntrl-1)) / 2;
-  bias_unc     = Xdim'*dterm_unc + sum(psiterms_unc);
-  
-  dterm_cond    = (ln2 - log(Ntrl_y-1)) / 2;
-  psiterms_cond = zeros(1,Ym);
-  for vi=vars
-    idx = (Ntrl_y-vi);
-    psiterms_cond = psiterms_cond + psi(idx/2);
-  end
-  bias_cond = Xdim*dterm_cond + (psiterms_cond/2);
-
-  Hunc  = Hunc  - bias_unc;
-  Hcond = Hcond - ones(Nvec,1)*bias_cond;
-end
-
 % class weights
 w = Ntrl_y ./ Ntrl;
 
@@ -151,6 +131,9 @@ I = Hunc - Hcond*w';
 
 % convert to bits
 I = I / ln2;
+if biascorrect
+  I = I - bias_mi_gd_bits(Xdim, Ntrl, Ntrl_y);
+end
 
 function [Xcen, class_means] = removeclassmeans(X, design)
 [Ntrl, Nvec, Ndim] = size(X);

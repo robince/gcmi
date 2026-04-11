@@ -72,19 +72,9 @@ Hunc = sum(log(diag(chC)));% + c*Nvar;
 % apply bias corrections
 ln2 = log(2);
 if biascorrect
-    vars = 1:Nvar;
-    
-    psiterms = psi((Ntrl - vars)/2) / 2;
-    dterm = (ln2 - log(Ntrl-1)) / 2;
-    Hunc = (Hunc - Nvar*dterm - sum(psiterms));
-    
-    dterm = (ln2 - log(Ntrl_y-1)) / 2;
-    psiterms = zeros(1,Ym);
-    for vi=vars
-        idx = (Ntrl_y-vi);
-        psiterms = psiterms + psi(idx/2);
-    end
-    Hcond = Hcond - Nvar*dterm - (psiterms/2);
+    I = Hunc - sum(w .* Hcond);
+    I = (I / ln2) - bias_mi_gd_bits(Nvar, Ntrl, Ntrl_y);
+    return
 end
 
 I = Hunc - sum(w .* Hcond);

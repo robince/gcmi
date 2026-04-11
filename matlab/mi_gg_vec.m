@@ -116,20 +116,14 @@ end
 
 ln2 = log(2);
 if biascorrect
-    psiterms = psi((Ntrl - (1:Nvarxy))/2) / 2;
-    dterm = (ln2 - log(Ntrl-1)) / 2;
-%     HX = (HX - Nvarx*dterm - sum(psiterms(1:Nvarx)));
-%     HY = (HY - Nvary*dterm - sum(psiterms(1:Nvary)));
-%     HXY = (HXY - Nvarxy*dterm - sum(psiterms));
-    HXbias = Nvarx*dterm + sum(psiterms(1:Nvarx));
-    HYbias = Nvary*dterm + sum(psiterms(1:Nvary));
-    HXYbias = Nvarxy*dterm + sum(psiterms);
-    Ibias = HXbias + HYbias - HXYbias;
+    Ibias = bias_mi_gg_bits(Nvarx, Nvary, Ntrl);
 else
     Ibias = 0;
 end
 
 % convert to bits
 % I = (HX + HY - HXY) / ln2;
-I = (bsxfun(@plus,HX-HXY, HY) - Ibias) ./ ln2;
-
+I = bsxfun(@plus,HX-HXY, HY) ./ ln2;
+if biascorrect
+    I = I - Ibias;
+end
